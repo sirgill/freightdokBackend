@@ -7,6 +7,7 @@ const router = express.Router();
 const { check, validationResult } = require("express-validator/check");
 const auth = require("../../middleware/auth");
 const checkObjectId = require("../../middleware/checkObjectId");
+const uploader =require("../../utils/uploader")
 // -----------------------------------------
 const url = require('url');
 
@@ -201,16 +202,24 @@ router.patch("/modify",
   upload.any()
 , async (req, res) => {
   const errors = validationResult(req);
+  console.log("===RqBody",req.body)
+  
+  console.log("===File",req.files)
+
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
   try {
     const formdata = req.body;
     const { _id } = formdata;
+    console.log("==allData===",formdata)
     delete formdata._id;
     
     const files = req.files;
+    let s3Files=await uploader(files);
+    // console.log("=====Files",s3Files)
     const dbLoad = await Load.findOne({_id});
+    // console.log(dbLoad)
     if (!dbLoad)
       throw new Error('UnAuthorized Access');
     if (files.length > 0) {
@@ -240,7 +249,32 @@ router.patch("/modify",
       dbDriver.loads = dbDriver.loads.concat(dbLoad);
       dbDriver.save();
     }
+
+    if(Array.isArray(formdata.bucketFiles)){ 
+
+  if(formdata.bucketFiles && formdata.bucketFiles.length>0){
+          let array1=formdata.bucketFiles;
+          let array2=s3Files.data;     
+          array1 = array1.filter(item => array2.every(item2 => item2.fileType != item.fileType));
+          let main=[];
+          main.push(...array1,...array2)
+          // console.log(main)
+          formdata.bucketFiles=main;
+  
+  }
+   else{
+        formdata.bucketFiles=s3Files.data;
+      }
+    }
+    else{
+      formdata.bucketFiles=s3Files.data;
+    }
+
+
+    console.log("=====>formDataBucketFiles===>",formdata.bucketFiles)
+
     const load = await Load.findOneAndUpdate({_id}, formdata, { new: true });
+    console.log(load)
     return res.json(load);
   } catch (err) {
     console.log(err);
@@ -253,6 +287,7 @@ router.patch("/upload/load/:load_id/:doc_type", upload.any(), async (req, res) =
   try {
     const { load_id, doc_type } = req.params;
     const load = await Load.findOne({ _id: load_id });
+
     if (!load)
       throw new Error("Load not found");
     const files = req.files;

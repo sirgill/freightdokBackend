@@ -1,6 +1,16 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
+
+const BucketFiles = new mongoose.Schema({
+  fileType: {  
+    type: String,
+  },
+  fileLocation:{
+    type:String
+  }
+})
+
 const PickUpSchema = new mongoose.Schema(
   {
     shipperName: {
@@ -146,8 +156,13 @@ const LoadSchema = new mongoose.Schema({
   },
   pickup: [PickUpSchema],
   drop: [DropOffSchema],
+  bucketFiles:[BucketFiles]
 },{
   timestamps: true
 });
+
+
+
+
 
 module.exports = Load = mongoose.model("load", LoadSchema);
