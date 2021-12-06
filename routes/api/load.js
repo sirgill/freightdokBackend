@@ -7,7 +7,7 @@ const router = express.Router();
 const { check, validationResult } = require("express-validator/check");
 const auth = require("../../middleware/auth");
 const checkObjectId = require("../../middleware/checkObjectId");
-const uploader =require("../../utils/uploader")
+const uploader = require("../../utils/uploader")
 // -----------------------------------------
 const url = require('url');
 
@@ -56,10 +56,12 @@ router.get("/me", auth, async (req, res) => {
 router.get("/invoice_loads", auth, async (req, res) => {
   try {
     const { page = 1, limit = 4, search = '' } = req.query;
-    const query = { status: 'Delivered', $or: [
-      { invoice_created: false },
-      { invoice_created: { $exists: false } }
-    ]};
+    const query = {
+      status: 'Delivered', $or: [
+        { invoice_created: false },
+        { invoice_created: { $exists: false } }
+      ]
+    };
     if (search) {
       const regex = { $regex: to_search, $options: 'i' };
       query['$or'] = [
@@ -68,11 +70,11 @@ router.get("/invoice_loads", auth, async (req, res) => {
     }
     const total = await Load.countDocuments(query);
     const loads = await Load.find(query)
-    // .select("loadNumber brokerage rate rateConfirmation proofDelivery")
-    .limit(limit * 1)
-    .sort({ createdAt: -1 })
-    .skip((page - 1) * limit)
-    .exec();
+      // .select("loadNumber brokerage rate rateConfirmation proofDelivery")
+      .limit(limit * 1)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .exec();
     return res.json({
       loads,
       total,
@@ -89,7 +91,7 @@ const getLoads = async ({ page = 1, limit = 4, search = '', module = '' }, _id) 
   const query = {};
   if (!search) {
     if (!module || (module && module === 'loads')) {
-      query['status'] = { $ne :'Delivered' };
+      query['status'] = { $ne: 'Delivered' };
     } else if (module && module === 'history') {
       query['invoice_created'] = true;
     }
@@ -97,7 +99,7 @@ const getLoads = async ({ page = 1, limit = 4, search = '', module = '' }, _id) 
     const to_search = search.toLowerCase();
     const regex = { $regex: to_search, $options: 'i' };
     const commonKeys = [
-      { loadNumber: regex }, 
+      { loadNumber: regex },
       { "pickup.pickupCity": regex },
       { "pickup.pickupState": regex },
       { "drop.dropCity": regex },
@@ -120,7 +122,7 @@ const getLoads = async ({ page = 1, limit = 4, search = '', module = '' }, _id) 
     query['user'] = _id;
 
   const allLoadsQuery = Object.assign({}, query);
-  allLoadsQuery['status'] = {$ne :'Delivered'};
+  allLoadsQuery['status'] = { $ne: 'Delivered' };
 
   const allLoads = await Load.find(allLoadsQuery);
 
@@ -141,7 +143,7 @@ const getLoads = async ({ page = 1, limit = 4, search = '', module = '' }, _id) 
   const count = await Load.countDocuments(query);
 
   if (!load) {
-    return { 
+    return {
       error: {
         status: 400,
         message: "There are no loads for this user"
@@ -165,7 +167,7 @@ router.get("/download/:file_name", auth, (req, res) => {
   const file = path.join(__dirname, '../../documents/load', file_name);
   const mimetype = mime.lookup(file);
   res.setHeader('Content-type', mimetype);
-  res.setHeader('Content-disposition', 'attachment; filename='+file_name);
+  res.setHeader('Content-disposition', 'attachment; filename=' + file_name);
   res.download(file);
 });
 
@@ -198,96 +200,95 @@ router.post("/", [auth, [check("loadNumber", "Load number is required").not().is
   }
 });
 
-router.patch("/modify", 
+router.patch("/modify",
   upload.any()
-, async (req, res) => {
-  const errors = validationResult(req);
-  console.log("===RqBody",req.body)
-  
-  console.log("===File",req.files)
+  , async (req, res) => {
+    const errors = validationResult(req);
+    console.log("===RqBody", req.body)
 
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-  try {
-    const formdata = req.body;
-    const { _id } = formdata;
-    console.log("==allData===",formdata)
-    delete formdata._id;
-    
-    const files = req.files;
-    let s3Files=await uploader(files);
-    // console.log("=====Files",s3Files)
-    const dbLoad = await Load.findOne({_id});
-    // console.log(dbLoad)
-    if (!dbLoad)
-      throw new Error('UnAuthorized Access');
-    if (files.length > 0) {
-      for (let key of ['rateConfirmation', 'proofDelivery']) {
-        let key_files = files.filter(f => f.fieldname === key);
-        if (key_files.length > 0) {
-          const file_data = [];
-          for (let data of key_files) {
-            const { filename } = data;
-            file_data.push({
-              name: filename,
-              date: Date.now()
-            });
+    console.log("===File", req.files)
+
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    try {
+      const formdata = req.body;
+      const { _id } = formdata;
+      console.log("==allData===", formdata)
+      delete formdata._id;
+
+      const files = req.files;
+      let s3Files = await uploader(files);
+      // console.log("=====Files",s3Files)
+      const dbLoad = await Load.findOne({ _id });
+      // console.log(dbLoad)
+      if (!dbLoad)
+        throw new Error('UnAuthorized Access');
+      if (files.length > 0) {
+        for (let key of ['rateConfirmation', 'proofDelivery']) {
+          let key_files = files.filter(f => f.fieldname === key);
+          if (key_files.length > 0) {
+            const file_data = [];
+            for (let data of key_files) {
+              const { filename } = data;
+              file_data.push({
+                name: filename,
+                date: Date.now()
+              });
+            }
+            formdata[key] = file_data;
           }
-          formdata[key] = file_data;
         }
       }
-    }
-    for (const key of ['accessorials', 'pickup', 'drop'])
-      formdata[key] = JSON.parse(formdata[key])
-    // if (formdata['assignedTo'] === 'null')
-    //   formdata['assignedTo'] = null;
-    const driver = formdata['assignedTo'];
-    if (driver) {
-      formdata['user'] = driver;
-      const dbDriver = await Driver.findOne({ user: driver });
-      dbDriver.loads = dbDriver.loads.concat(dbLoad);
-      dbDriver.save();
-    }
-
-    if(Array.isArray(formdata.bucketFiles)){ 
-
-  if(formdata.bucketFiles && formdata.bucketFiles.length>0){
-          let array1=formdata.bucketFiles;
-          let array2=s3Files.data;     
-          array1 = array1.filter(item => array2.every(item2 => item2.fileType != item.fileType));
-          let main=[];
-          main.push(...array1,...array2)
-          // console.log(main)
-          formdata.bucketFiles=main;
-  
-  }
-   else{
-        formdata.bucketFiles=s3Files.data;
+      for (const key of ['accessorials', 'pickup', 'drop'])
+        formdata[key] = JSON.parse(formdata[key])
+      // if (formdata['assignedTo'] === 'null')
+      //   formdata['assignedTo'] = null;
+      const driver = formdata['assignedTo'];
+      if (driver) {
+        formdata['user'] = driver;
+        const dbDriver = await Driver.findOne({ user: driver });
+        dbDriver.loads = dbDriver.loads.concat(dbLoad);
+        dbDriver.save();
       }
+
+      if (Array.isArray(formdata.bucketFiles)) {
+
+        if (formdata.bucketFiles && formdata.bucketFiles.length > 0) {
+          let array1 = formdata.bucketFiles;
+          let array2 = s3Files.data;
+          array1 = array1.filter(item => array2.every(item2 => item2.fileType != item.fileType));
+          let main = [];
+          main.push(...array1, ...array2)
+          // console.log(main)
+          formdata.bucketFiles = main;
+
+        }
+        else {
+          formdata.bucketFiles = s3Files.data;
+        }
+      }
+      else {
+        formdata.bucketFiles = s3Files.data;
+      }
+
+
+      console.log("=====>formDataBucketFiles===>", formdata.bucketFiles)
+
+      const load = await Load.findOneAndUpdate({ _id }, formdata, { new: true });
+      console.log(load)
+      return res.json(load);
+    } catch (err) {
+      console.log(err);
+      return res.status(500).send(err.message);
     }
-    else{
-      formdata.bucketFiles=s3Files.data;
-    }
-
-
-    console.log("=====>formDataBucketFiles===>",formdata.bucketFiles)
-
-    const load = await Load.findOneAndUpdate({_id}, formdata, { new: true });
-    console.log(load)
-    return res.json(load);
-  } catch (err) {
-    console.log(err);
-    return res.status(500).send(err.message);
-  }
-});
+  });
 
 //@desc upload new document for a load
 router.patch("/upload/load/:load_id/:doc_type", upload.any(), async (req, res) => {
   try {
     const { load_id, doc_type } = req.params;
     const load = await Load.findOne({ _id: load_id });
-
     if (!load)
       throw new Error("Load not found");
     const files = req.files;
@@ -301,7 +302,7 @@ router.patch("/upload/load/:load_id/:doc_type", upload.any(), async (req, res) =
     }
     load[doc_type] = file_data;
     await load.save();
-    return res.json({file_data});
+    return res.json({ file_data });
   } catch (err) {
     return res.status(500).send(err.message);
   }
@@ -331,12 +332,12 @@ router.delete('/remove/doc/:load_id/:doc_type', auth, async (req, res) => {
 
 router.get('/driverLoads', async (req, res) => {
   try {
-    const queryObject = url.parse(req.url,true).query;
-    let {driver}=queryObject;
+    const queryObject = url.parse(req.url, true).query;
+    let { driver } = queryObject;
 
-    console.log("----Query Params",driver)
+    console.log("----Query Params", driver)
 
-    const loads = await Load.find({assignedTo:driver}).populate('user', ['name']);
+    const loads = await Load.find({ assignedTo: driver }).populate('user', ['name']);
     res.json(loads);
   } catch (err) {
     console.error(err.message);
@@ -369,17 +370,17 @@ router.get("/user/:user_id", async (req, res) => {
 //@desc  Delete load & driver
 //@access Private
 
-router.delete('/', auth , function(req, res){
+router.delete('/', auth, function (req, res) {
   const load_id = req.body.load_id;
-  Load.findOneAndDelete({_id: load_id}, function (err, load) { 
-    if (err){ 
-        console.log(err);
-        return res.status(500).json({ msg: "Something went wrong, could not delete object." , load_id: null});
-    } 
-    else{ 
+  Load.findOneAndDelete({ _id: load_id }, function (err, load) {
+    if (err) {
+      console.log(err);
+      return res.status(500).json({ msg: "Something went wrong, could not delete object.", load_id: null });
+    }
+    else {
       return res.json(load);
-    } 
-}); 
+    }
+  });
 });
 
 //@route Put api/load/pickup
@@ -594,33 +595,33 @@ router.post('/invoice/merge_docs', async (req, res) => {
     const filePathToSave = path.join(__dirname, '../../documents/load/' + fileName);
     const finalFilePath = path.join(__dirname, '../../documents/load/output.pdf');
     const base64Data = invoice.replace(/^data:([A-Za-z-+/]+);base64,/, '');
-    
-    fs.writeFileSync(filePathToSave, base64Data,  {encoding: 'base64'}, async (err) => {
-        if (err) {
-          console.log('Err in writing file :', err)
-        }
+
+    fs.writeFileSync(filePathToSave, base64Data, { encoding: 'base64' }, async (err) => {
+      if (err) {
+        console.log('Err in writing file :', err)
+      }
     });
 
     setTimeout(async () => {
       console.log('Executing...')
-      
+
       merger.add(filePathToSave);
       docs.forEach((item) => {
         if (fs.existsSync(path.join(__dirname, '../../documents/load/' + item))) {
           merger.add(path.join(__dirname, '../../documents/load/' + item));
         }
       });
-      
+
       await merger.save(finalFilePath);
-      
+
       const src = fs.createReadStream(finalFilePath);
-      src.pipe(res); 
-      
+      src.pipe(res);
+
     }, 2000)
   } catch (error) {
     return res.status(500).send('Internal Server Error').end()
   }
-  
+
 })
 
 module.exports = router;

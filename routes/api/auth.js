@@ -108,7 +108,7 @@ router.patch("/", auth, async (req, res) => {
     return res.json({
       message: 'User has been updated'
     });
-  }  catch (e) {
+  } catch (e) {
     res.status(500).send(e.message);
   }
 });

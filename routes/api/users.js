@@ -22,14 +22,14 @@ router.get("/", auth, async (req, res) => {
     const isAdmin = await admin_check(req.user.id, allowed_members_set_1);
     if (!isAdmin)
       throw new Error('Forbidden', 403);
-    const count = await User.countDocuments({_id: { $ne: [req.user.id] }});
+    const count = await User.countDocuments({ _id: { $ne: [req.user.id] } });
     const users = await User
-    .find({_id: { $ne: [req.user.id] }})
-    .limit(limit * 1)
-    .sort('-date')
-    .skip((page - 1) * limit)
-    .select('name email role')
-    .exec();
+      .find({ _id: { $ne: [req.user.id] } })
+      .limit(limit * 1)
+      .sort('-date')
+      .skip((page - 1) * limit)
+      .select('name email role')
+      .exec();
     res.json({
       users,
       limit,
@@ -38,7 +38,7 @@ router.get("/", auth, async (req, res) => {
       currentPage: page - 1
     });
   } catch (e) {
-    res.status(500).send(e.message); 
+    res.status(500).send(e.message);
   }
 });
 
@@ -162,7 +162,7 @@ router.delete("/:_id", auth, async (req, res) => {
     const isAdmin = await admin_check(req.user.id, allowed_members_set_1);
     if (!isAdmin)
       throw new Error('Forbidden', 403);
-    const user = await User.findOne({ _id});
+    const user = await User.findOne({ _id });
     if (user.role === 'admin')
       throw new Error('Cannot delete a user');
     await user.remove();

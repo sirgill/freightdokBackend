@@ -3,11 +3,11 @@ const Schema = mongoose.Schema;
 
 
 const BucketFiles = new mongoose.Schema({
-  fileType: {  
+  fileType: {
     type: String,
   },
-  fileLocation:{
-    type:String
+  fileLocation: {
+    type: String
   }
 })
 
@@ -23,7 +23,7 @@ const PickUpSchema = new mongoose.Schema(
 
     in_time: String,
     out_time: String,
-    
+
     pickupCity: {
       type: String,
     },
@@ -127,7 +127,7 @@ const LoadSchema = new mongoose.Schema({
 
   assigned: {
     type: Boolean,
-    default: false 
+    default: false
   },
 
   assignedTo: {
@@ -137,7 +137,7 @@ const LoadSchema = new mongoose.Schema({
 
   status: String,
   accessorials: Array,
-  
+
   rateConfirmation: {
     type: Array,
     default: []
@@ -156,8 +156,8 @@ const LoadSchema = new mongoose.Schema({
   },
   pickup: [PickUpSchema],
   drop: [DropOffSchema],
-  bucketFiles:[BucketFiles]
-},{
+  bucketFiles: [BucketFiles]
+}, {
   timestamps: true
 });
 
