@@ -51,8 +51,17 @@ router.get('/:id', auth, (req, res) => {
         })
 })
 
-router.delete('/', auth, (req, res) => {
-
+router.delete('/:id', auth, (req, res) => {
+    const { params: { id = '' } } = req;
+    if (!id) {
+        return res.status(404).json({ message: 'ID does not exists' })
+    }
+    Warehouse.findByIdAndDelete(id)
+        .then(result => {
+            if (result)
+                res.status(200).json({ message: 'Deleted successfully!' });
+        })
+        .catch(err => console.log(err))
 })
 
 module.exports = router;
