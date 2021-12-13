@@ -49,7 +49,7 @@ router.post('/getLocation', auth, (req, res) => {
                 const { status, results = [] } = data;
                 if (status.code === 200) {
                     if (!results.length) {
-                        return res.status(404).json({ success: false, message: 'Not Found' })
+                        return res.status(200).json({ success: false, message: 'Not Found' })
                     }
                     if (results.length === 1) {
                         return res.status(200).json({ success: true, data: results[0].geometry })
