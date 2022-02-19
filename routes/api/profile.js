@@ -66,7 +66,18 @@ router.post(
     //   return res.status(400).json({ errors: errors.array() });
     // }
 
-    const { company, title, name, image } = req.body;
+    const { company = '', title, name, image } = req.body;
+
+    if (!req.files.file) {
+      let profile = await Profile.findOneAndUpdate(
+        { user: req.user.id },
+        { $set: { company, title, name } },
+        { new: true, upsert: true }
+      ).lean();
+
+      res.json(profile);
+      return;
+    }
 
     try {
       const data = new FormData();
