@@ -68,60 +68,62 @@ router.post(
 
     const { company = '', title, name, image } = req.body;
 
-    if (!req.files.file) {
-      let profile = await Profile.findOneAndUpdate(
-        { user: req.user.id },
-        { $set: { company, title, name } },
-        { new: true, upsert: true }
-      ).lean();
-
-      res.json(profile);
-      return;
-    }
-
     try {
-      const data = new FormData();
-      const readStream = fs.createReadStream(req.files.file.path);
-      data.append("sampleFile", readStream);
-      const config = {
-        method: 'post',
-        url: 'http://3.6.22.119:7777/upload',
-        headers: {
-          ...data.getHeaders()
-        },
-        data: data
-      }
-      let success = false
-      axios(config).then(async ({ status, data = {} }) => {
-        if (status === 200) {
-          const { fileData: { Location = '' } = {} } = data;
-          success = true;
-          const profileFields = {
-            user: req.user.id,
-            company,
-            title,
-            name,
-            image: Location
-          };
-          let profile = await Profile.findOneAndUpdate(
-            { user: req.user.id },
-            { $set: profileFields },
-            { new: true, upsert: true }
-          ).lean();
+      if (req.files.file) {
+        const data = new FormData();
+        const readStream = fs.createReadStream(req.files.file.path);
+        data.append("sampleFile", readStream);
+        const config = {
+          method: 'post',
+          url: 'http://3.6.22.119:7777/upload',
+          headers: {
+            ...data.getHeaders()
+          },
+          data: data
+        }
+        let success = false
+        axios(config).then(async ({ status, data = {} }) => {
+          if (status === 200) {
+            const { fileData: { Location = '' } = {} } = data;
+            success = true;
+            const profileFields = {
+              user: req.user.id,
+              company,
+              title,
+              name,
+              image: Location
+            };
+            let profile = await Profile.findOneAndUpdate(
+              { user: req.user.id },
+              { $set: profileFields },
+              { new: true, upsert: true }
+            ).lean();
 
-          if (profile.image) {
-            profile.imageUrl = Location;
+            if (profile.image) {
+              profile.imageUrl = Location;
+            }
+
+            res.json(profile);
           }
-
-          res.json(profile);
-        }
-        else {
-          res.json({ message: 'Something went wrong! Please try later.', success: false })
-        }
-      })
-        .catch(err => {
-          console.log(err);
+          else {
+            res.json({ message: 'Something went wrong! Please try later.', success: false })
+          }
         })
+          .catch(err => {
+            console.log(err);
+          })
+      }
+      else {
+        let profile = await Profile.findOneAndUpdate(
+          { user: req.user.id },
+          { $set: { company, title, name } },
+          { new: true, upsert: true }
+        ).lean();
+
+        res.json(profile);
+        return;
+      }
+
 
       //update
       // let imageName = null;
