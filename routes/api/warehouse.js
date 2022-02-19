@@ -69,7 +69,7 @@ router.post('/getLocation', auth, (req, res) => {
         });
 })
 
-router.post('/distance', auth, (req, res) => {
+router.post('/distance', (req, res) => {
     const { _id, lat, lng } = req.body;
     console.log(req.body)
     if (_id) {
@@ -81,11 +81,10 @@ router.post('/distance', auth, (req, res) => {
                     const distance = getDistanceinKM(lat, lng, latitude, longitude)
                     res.status(200).send(Math.floor(distance) + ' km')
                 }
-                else throw new Error("Latitude and Longitude is not found")
+                else res.status(404).json({ message: "Latitude and Longitude is not found" })
             })
             .catch(err => {
-                console.log(err)
-                res.send(500).json(err)
+                console.log('Error in /distance: ', err.message)
             })
     }
 })

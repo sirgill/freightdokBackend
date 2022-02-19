@@ -6,6 +6,7 @@ const cors = require('cors');
 const path = require('path');
 const seeder = require('./seeder');
 const morgan = require("morgan")
+const multipart = require('connect-multiparty')
 
 const app = express();
 
@@ -14,12 +15,18 @@ connectDB();
 //Create Admin
 seeder();
 
+const multipartMiddleware = multipart({ maxFieldsSize: (20 * 1024 * 1024) });
+
+
+// Convert 
+app.use(multipartMiddleware);
+
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(cors());
 app.use(express.static(path.join(__dirname, './documents/load')));
 app.use(express.static(path.join(__dirname, './documents')));
-app.use(morgan(':method :url :status :res[content-length] - :response-time ms'))
+app.use(morgan('dev'))
 
 app.use('/api/users', require('./routes/api/users'));
 app.use('/api/auth', require('./routes/api/auth'));
