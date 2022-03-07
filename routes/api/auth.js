@@ -26,7 +26,7 @@ router.get("/", auth, async (req, res) => {
 });
 
 //@route Post api/auth
-//@desc Authrnticate user and get tokrn
+//@desc Authenticate user and get token
 //@access Public
 router.post(
   "/",
@@ -51,7 +51,7 @@ router.post(
         return res.status(400).json({ errors: [{ msg: "Invalid Creds." }] });
       }
 
-      const isMatch = true//await bcrypt.compare(password, user.password);
+      const isMatch = await bcrypt.compare(password, user.password);
 
       if (!isMatch) {
         return res.status(400).json({ errors: [{ msg: "Invalid Creds." }] });
