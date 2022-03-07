@@ -26,6 +26,7 @@ app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(cors());
 app.use(express.static(path.join(__dirname, './documents/load')));
 app.use(express.static(path.join(__dirname, './documents')));
+app.use(express.static(path.join(__dirname, './documents/privacyPolicy')));
 app.use(morgan('dev'))
 
 app.use('/api/users', require('./routes/api/users'));
