@@ -58,7 +58,14 @@ router.post(
     }
 
     try {
-      const { user, firstName, lastName, phoneNumber, loads } = req.body;
+      const { user, firstName, lastName, phoneNumber, loads, _id } = req.body;
+
+      if(_id){
+        const updater = await Driver.updateOne({_id}, {firstName, lastName, phoneNumber});
+        console.log('updater', updater);
+        return res.json({success: true, message: 'Driver Updated'});
+      }
+
       const newLoads = loads.reduce((array, data) => {
         array.push(data._id);
         return array;
@@ -83,7 +90,7 @@ router.post(
         loads,
       });
 
-      res.json(newDriver);
+      res.json({success: true, message: 'Driver Created'});
     } catch (err) {
       console.error(err.message);
       res.status(500).send("Server Error");
