@@ -5,6 +5,8 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');
 const seeder = require('./seeder');
+const morgan = require("morgan")
+const multipart = require('connect-multiparty')
 
 const app = express();
 
@@ -13,11 +15,19 @@ connectDB();
 //Create Admin
 seeder();
 
+const multipartMiddleware = multipart({ maxFieldsSize: (20 * 1024 * 1024) });
+
+
+// Convert 
+app.use(multipartMiddleware);
+
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(cors());
 app.use(express.static(path.join(__dirname, './documents/load')));
 app.use(express.static(path.join(__dirname, './documents')));
+app.use(express.static(path.join(__dirname, './documents/privacyPolicy')));
+app.use(morgan('dev'))
 
 app.use('/api/users', require('./routes/api/users'));
 app.use('/api/auth', require('./routes/api/auth'));
@@ -27,6 +37,9 @@ app.use('/api/profile', require('./routes/api/profile'));
 app.use('/api/invoice', require('./routes/api/invoice'));
 app.use('/api/warehouse', require('./routes/api/warehouse'));
 app.use('/api/vendors', require('./routes/api/vendors'))
+app.use('/privacy-policy', (req, res) => {
+    res.sendFile(path.join(__dirname, '/documents/privacyPolicy', 'Privacy_Policy.html'))
+})
 
 app.get('/', (req, res) => res.send('API Running'));
 
