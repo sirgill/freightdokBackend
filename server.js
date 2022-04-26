@@ -26,6 +26,7 @@ app.use('/api/drivers', require('./routes/api/drivers'));
 app.use('/api/profile', require('./routes/api/profile'));
 app.use('/api/invoice', require('./routes/api/invoice'));
 app.use('/api/warehouse', require('./routes/api/warehouse'));
+app.use('/api/vendors', require('./routes/api/vendors'))
 
 app.get('/', (req, res) => res.send('API Running'));
 
