@@ -36,6 +36,8 @@ app.use('/api/drivers', require('./routes/api/drivers'));
 app.use('/api/profile', require('./routes/api/profile'));
 app.use('/api/invoice', require('./routes/api/invoice'));
 app.use('/api/warehouse', require('./routes/api/warehouse'));
+app.use('/api/vendors', require('./routes/api/vendors'))
+app.use('/api/bid', require('./routes/api/bidding'))
 app.use('/privacy-policy', (req, res) => {
     res.sendFile(path.join(__dirname, '/documents/privacyPolicy', 'Privacy_Policy.html'))
 })
