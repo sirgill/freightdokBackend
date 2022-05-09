@@ -1,32 +1,34 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const BidsSchema = new mongoose.Schema({
+const BidsSchema = new mongoose.Schema(
+  {
     vendorId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'vendors'
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "vendors",
     },
     ownerOpId: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
     loadNumber: {
-        type: String
+      type: String,
+      unique: true,
     },
     bidAmount: {
-        type: String
+      type: String,
     },
     contactId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'contact'
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "contact",
     },
     status: {
-        type: Boolean,
-        default: 0
-    }    
-},
-    {
-        timestamps: true,
-    }
+      type: Boolean,
+      default: 0,
+    },
+  },
+  {
+    timestamps: true,
+  }
 );
 
-module.exports = mongoose.model('bids', BidsSchema);
+module.exports = mongoose.model("bids", BidsSchema);
