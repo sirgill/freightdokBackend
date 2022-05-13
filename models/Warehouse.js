@@ -1,56 +1,61 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-const warehouseSchema = new Schema({
+const warehouseSchema = new Schema(
+  {
     name: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
     address: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
     city: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
     state: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
     zip: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
     averageLoadTime: {
-        type: String,
-        required: false
+      type: String,
+      required: false,
     },
     parking: {
-        type: Boolean
+      type: Boolean,
     },
     appointment: {
-        type: String
+      type: String,
     },
     serviceHours: {
-        type: String
+      type: String,
     },
     restroom: {
-        type: Boolean,
-        required: true
+      type: Boolean,
+      required: true,
+    },
+    fcfs: {
+      type: Boolean,
     },
     phone: {
-        type: String,
+      type: String,
     },
     latitude: {
-        type: String
+      type: String,
     },
     longitude: {
-        type: String
-    }
-},
-    {
-        timestamps: true
-    })
+      type: String,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
 
-module.exports = mongoose.model("warehouse", warehouseSchema)
+module.exports = mongoose.model("warehouse", warehouseSchema);
