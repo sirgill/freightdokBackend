@@ -37,7 +37,6 @@ router.get("/", (req, res) => {
 router.get("/biddings", (req, res) => {
   Bid.find()
     .then((bid) => {
-      console.log(bid);
       res.status(200).json({ totalCount: bid.length, data: bid });
     })
     .catch((err) => {
