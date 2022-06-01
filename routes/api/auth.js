@@ -60,7 +60,10 @@ router.post(
       //Return jsonwebtoken
       const payload = {
         user: {
-          id: user.id
+          id: user.id,
+          email,
+          name: user.name || 'Sunny'
+
         }
       };
 

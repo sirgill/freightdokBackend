@@ -3,9 +3,8 @@ const router = express.Router();
 const auth = require("../../middleware/auth");
 const Bid = require("../../models/Bids");
 const path = require("path");
-const { truncate } = require("fs");
 
-router.get("/", (req, res) => {
+router.get("/", auth, (req, res) => {
   const { bidReq } = req.query;
 
   const params = JSON.parse(decodeURIComponent(bidReq) || "");
