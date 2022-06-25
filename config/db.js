@@ -17,6 +17,9 @@ const connectDB = async () => {
     console.log('MongoDB Connected...');
   } catch (err) {
     console.error(err.message);
+    if (err.code === 'ECONNREFUSED') {
+      console.error('System seems to be offline. Please try again.')
+    }
     //Exit process with failure
     process.exit(1);
 
