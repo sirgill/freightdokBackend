@@ -15,11 +15,11 @@ connectDB();
 //Create Admin
 seeder();
 
-const multipartMiddleware = multipart({ maxFieldsSize: (20 * 1024 * 1024) });
+// const multipartMiddleware = multipart({ maxFieldsSize: (20 * 1024 * 1024) });
 
 
 // Convert 
-app.use(multipartMiddleware);
+// app.use(multipartMiddleware);
 
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
