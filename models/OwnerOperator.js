@@ -13,9 +13,13 @@ const OwnerOperatorSchema = new mongoose.Schema({
         type: String,
         default: 'ownerOperator',
         enum: roles
-      },
+    },
     phoneNumber: {
-       type: String,
+        type: String,
+    },
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'user'
     },
 },
     {
