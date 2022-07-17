@@ -19,7 +19,6 @@ router.post('/', auth, (req, res) => {
     else {
         CHRobinson.updateOne({ loadNumber }, { isBooked })
             .then((response) => {
-                console.log('HHHHHHH', response)
                 res.status(201).json({ success: true, message: 'Load Number: ' + loadNumber + ' updated successfully' })
             })
             .catch(err => {

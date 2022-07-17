@@ -13,6 +13,10 @@ const CHRobinson = new mongoose.Schema({
         type: Number,
         required: true,
         unique: true
+    },
+    isDelivered: {
+        type: Boolean,
+        default: false
     }
 },
     {
