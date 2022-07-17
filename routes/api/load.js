@@ -248,14 +248,15 @@ router.patch("/modify",
       if (driver) {
         formdata['user'] = driver;
         const dbDriver = await Driver.findOne({ user: driver });
-        dbDriver.loads = dbDriver.loads.concat(dbLoad);
-        dbDriver.save();
+        if (dbDriver) {
+          dbDriver.loads = dbDriver.loads.concat(dbLoad);
+          dbDriver.save();
+        }
       }
-
-      if (Array.isArray(formdata.bucketFiles)) {
-
+      let bktFiles = JSON.parse(formdata.bucketFiles)
+      if (bktFiles) {
         if (formdata.bucketFiles && formdata.bucketFiles.length > 0) {
-          let array1 = formdata.bucketFiles;
+          let array1 = bktFiles;
           let array2 = s3Files.data;
           array1 = array1.filter(item => array2.every(item2 => item2.fileType != item.fileType));
           let main = [];
