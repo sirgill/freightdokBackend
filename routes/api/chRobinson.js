@@ -36,7 +36,9 @@ function formatLoad(load, userId) {
             "dropReference": "",
         },
         bucketFiles: [],
-        status: 'loadCheckedIn'
+        status: 'loadCheckedIn',
+        equipment: load.equipment,
+        modes: load.modes
     }
 }
 

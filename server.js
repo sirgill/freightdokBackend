@@ -40,9 +40,10 @@ app.use('/api/vendors', require('./routes/api/vendors'))
 app.use('/api/bid', require('./routes/api/bidding'));
 app.use('/api/ownerOperator', require('./routes/api/ownerOperator'));
 app.use('/api/chRobinson', require('./routes/api/chRobinson'));
+app.use('/api/register', require('./routes/api/register'))
 app.use('/privacy-policy', (req, res) => {
     res.sendFile(path.join(__dirname, '/documents/privacyPolicy', 'Privacy_Policy.html'))
-})
+});
 
 app.get('/', (req, res) => res.send('API Running'));
 
