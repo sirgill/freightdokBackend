@@ -62,6 +62,7 @@ router.post(
         user: {
           id: user.id,
           email,
+          role: user.role,
           name: user.name || 'Sunny'
 
         }
