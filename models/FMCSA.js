@@ -11,6 +11,15 @@ const FMCSA = new Schema({
         type: Object,
         required: true
     },
+    autoLiabilityInsurance: {
+        type: Object
+    },
+    generalLiabilityInsurance: {
+        type: Object
+    },
+    cargoLiablityInsurance: {
+        type: Object
+    },
 
 },
     {
