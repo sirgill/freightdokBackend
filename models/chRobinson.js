@@ -1,6 +1,10 @@
 const mongoose = require('mongoose');
 
 const CHRobinson = new mongoose.Schema({
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "user",
+    },
     loadDetail: {
         type: Object,
         required: false
@@ -13,6 +17,10 @@ const CHRobinson = new mongoose.Schema({
         type: Number,
         required: true,
         unique: true
+    },
+    isDelivered: {
+        type: Boolean,
+        default: false
     }
 },
     {

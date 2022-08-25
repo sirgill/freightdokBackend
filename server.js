@@ -38,11 +38,14 @@ app.use('/api/invoice', require('./routes/api/invoice'));
 app.use('/api/warehouse', require('./routes/api/warehouse'));
 app.use('/api/vendors', require('./routes/api/vendors'))
 app.use('/api/bid', require('./routes/api/bidding'));
+app.use('/api/fleetOwner', require('./routes/api/fleetOwner'));
 app.use('/api/ownerOperator', require('./routes/api/ownerOperator'));
+app.use('/api/fmcsa', require('./routes/api/fmcsa'));
 app.use('/api/chRobinson', require('./routes/api/chRobinson'));
+app.use('/api/register', require('./routes/api/register'))
 app.use('/privacy-policy', (req, res) => {
     res.sendFile(path.join(__dirname, '/documents/privacyPolicy', 'Privacy_Policy.html'))
-})
+});
 
 app.get('/', (req, res) => res.send('API Running'));
 

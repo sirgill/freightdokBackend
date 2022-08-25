@@ -1,7 +1,7 @@
 const { roles } = require('../config/default.json');
 const mongoose = require('mongoose');
 
-const OwnerOperatorSchema = new mongoose.Schema({
+const fleetOwnerSchema = new mongoose.Schema({
     firstName: {
         type: String,
         required: true
@@ -11,11 +11,15 @@ const OwnerOperatorSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        default: 'ownerOperator',
+        default: 'fleetOwner',
         enum: roles
     },
     phoneNumber: {
         type: String,
+    },
+    DOT: {
+        type: String,
+        required: true
     },
     email: {
         type: String,
@@ -31,4 +35,4 @@ const OwnerOperatorSchema = new mongoose.Schema({
     }
 );
 
-module.exports = mongoose.model('ownerOperator', OwnerOperatorSchema);
+module.exports = mongoose.model('fleetOwner', fleetOwnerSchema);

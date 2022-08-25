@@ -1,5 +1,15 @@
 {
-  "mongoURI":"mongodb+srv://freightdokDB:sunnyfreight@freightdokdev-ppec0.mongodb.net/test?retryWrites=true&w=majority",
+  "mongoURI": "mongodb+srv://freightdokDB:sunnyfreight@freightdokdev-ppec0.mongodb.net/test?retryWrites=true&w=majority",
   "jwtSecret": "myfreighttoken",
-  "roles": ["dispatch", "support", "afterhours", "driver", "user", "admin", "load planner", "ownerOperator"]
+  "roles": [
+    "dispatch",
+    "support",
+    "afterhours",
+    "driver",
+    "user",
+    "admin",
+    "load planner",
+    "ownerOperator",
+    "fleetOwner"
+  ]
 }

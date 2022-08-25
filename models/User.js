@@ -16,6 +16,13 @@ const UserSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
+  phone: {
+    type: String,
+  },
+  dot: {
+    type: String,
+    default: ''
+  },
   role: {
     type: String,
     default: 'user',
