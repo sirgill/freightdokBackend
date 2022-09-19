@@ -6,7 +6,8 @@ const cors = require('cors');
 const path = require('path');
 const seeder = require('./seeder');
 const morgan = require("morgan")
-const multipart = require('connect-multiparty')
+const multipart = require('connect-multiparty');
+const NewTrulLoad = require('./models/newTrulLoad');
 
 const app = express();
 
@@ -50,10 +51,17 @@ app.use('/privacy-policy', (req, res) => {
 
 // ---------------------------------------------------------------------------
 app.post('/newtrul/webhook/v1/request_status_update', (req, res) => {
-    const { event_type } = req.body
-    if (req.body) {
-        res.status(200).json({ success: true, message: 'Load Status Updated at freightdok successfully !' })
+    const { event_type, event_data: { load: { id } } } = req.body
+    let wbIsBooked = false
+    if (event_type === 'BOOK_LOAD_SUCCESS') {
+        wbIsBooked = true
     }
+    NewTrulLoad.updateOne({ loadNumber: id }, { wbIsBooked })
+        .then(response => {
+            if (response) {
+                res.status(200).json({ success: true, message: 'Load Status Updated at freightdok successfully !' })
+            }
+        })
 });
 //For Bids on NewTrul
 app.post('/newtrul/webhook/v1/offer_status_update', (req, res) => {

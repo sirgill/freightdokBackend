@@ -13,6 +13,10 @@ const NewTrulLoad = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    wbIsBooked: {
+        type: Boolean,
+        default: false
+    },
     offerAccepted: {
         type: Boolean,
         default: false
