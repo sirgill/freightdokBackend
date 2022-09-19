@@ -42,10 +42,27 @@ app.use('/api/fleetOwner', require('./routes/api/fleetOwner'));
 app.use('/api/ownerOperator', require('./routes/api/ownerOperator'));
 app.use('/api/fmcsa', require('./routes/api/fmcsa'));
 app.use('/api/chRobinson', require('./routes/api/chRobinson'));
+app.use('/api/newtrulLoad', require('./routes/api/newTrulLoad'));
 app.use('/api/register', require('./routes/api/register'))
 app.use('/privacy-policy', (req, res) => {
     res.sendFile(path.join(__dirname, '/documents/privacyPolicy', 'Privacy_Policy.html'))
 });
+
+// ---------------------------------------------------------------------------
+app.post('/newtrul/webhook/v1/request_status_update', (req, res) => {
+    const { event_type } = req.body
+    if (req.body) {
+        res.status(200).json({ success: true, message: 'Load Status Updated at freightdok successfully !' })
+    }
+});
+//For Bids on NewTrul
+app.post('/newtrul/webhook/v1/offer_status_update', (req, res) => {
+    const { event_type } = req.body
+    if (req.body) {
+        res.status(200).json({ success: true, message: 'Offer Status Updated at freightdok successfully !' })
+    }
+});
+// ---------------------------------------------------------------------------
 
 app.get('/', (req, res) => res.send('API Running'));
 
