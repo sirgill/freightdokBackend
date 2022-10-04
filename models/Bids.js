@@ -25,6 +25,14 @@ const BidsSchema = new mongoose.Schema(
       type: Boolean,
       default: 0,
     },
+    bidLevel: {
+      type: Number,
+      default: 1
+    },
+    vendorName: {
+      type: String,
+      required: true
+    }
   },
   {
     timestamps: true,
@@ -32,3 +40,10 @@ const BidsSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.model("bids", BidsSchema);
+
+/**
+ * 1 - bid placed
+ * 2 - counter offer from vendor
+ * 3 - counter offer by driver
+ * 4 - final offer received
+ */
