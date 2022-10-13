@@ -8,6 +8,7 @@ const seeder = require('./seeder');
 const morgan = require("morgan")
 const multipart = require('connect-multiparty');
 const NewTrulLoad = require('./models/newTrulLoad');
+const Bids = require('./models/Bids');
 
 const app = express();
 
@@ -65,7 +66,38 @@ app.post('/newtrul/webhook/v1/request_status_update', (req, res) => {
 });
 //For Bids on NewTrul
 app.post('/newtrul/webhook/v1/offer_status_update', (req, res) => {
-    const { event_type } = req.body
+    const { event_type, event_data = {} } = req.body
+    const { load: { id = '' }, counter_offer: { amount = '' } = {} } = event_data;
+    if (event_type === 'OFFER_ACCEPTED') {
+        Bids.updateOne({ loadNumber: id }, { status: true, offerStatus: event_type, event_data })
+            .then(resp => res.status(200).json({ success: true, message: 'Offer Status Updated at freightdok successfully !' }))
+        return;
+    } else if (event_type === 'OFFER_REJECTED') {
+        Bids.updateOne({ loadNumber: id }, { status: false, offerStatus: event_type, event_data })
+            .then(resp => res.status(200).json({ success: true, message: 'Offer Status Updated at freightdok successfully !' }))
+        return;
+    }
+    else if (event_type === 'COUNTER_OFFER_CREATED') {
+        Bids.findOne({ loadNumber: id })
+            .then(resp => {
+                let { bidAmount } = resp;
+                bidAmount = bidAmount + "," + amount;
+                Bids.updateOne({ loadNumber: id }, { status: false, offerStatus: event_type, event_data, bidLevel: 2, bidAmount })
+                    .then(resp => res.status(200).json({ success: true, message: 'Offer Status Updated at freightdok successfully !' }))
+                return;
+            })
+    }
+    else if (event_type === 'FINAL_OFFER_CREATED') {
+        Bids.findOne({ loadNumber: id })
+            .then(resp => {
+                const { final_offer: { amount = undefined } = {} } = event_data;
+                let { bidAmount } = resp;
+                bidAmount = bidAmount + "," + amount;
+                Bids.updateOne({ loadNumber: id }, { status: false, offerStatus: event_type, event_data, bidLevel: 3, bidAmount })
+                    .then(() => res.status(200).json({ success: true, message: 'Offer Status Updated at freightdok successfully !' }))
+                return;
+            })
+    }
     if (req.body) {
         res.status(200).json({ success: true, message: 'Offer Status Updated at freightdok successfully !' })
     }

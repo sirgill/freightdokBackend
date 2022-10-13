@@ -46,7 +46,6 @@ router.get("/biddings", (req, res) => {
 });
 
 router.post("/newTrulBidding/:loadNumber", auth, (req, res) => {
-  console.log('posting bid')
   const { params: { loadNumber = '' } = {} } = req;
   const body = req.body;
   console.log(body)

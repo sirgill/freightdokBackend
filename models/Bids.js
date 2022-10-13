@@ -23,7 +23,7 @@ const BidsSchema = new mongoose.Schema(
     },
     status: {
       type: Boolean,
-      default: 0,
+      default: false
     },
     bidLevel: {
       type: Number,
@@ -32,6 +32,16 @@ const BidsSchema = new mongoose.Schema(
     vendorName: {
       type: String,
       required: true
+    },
+    offerStatus: {
+      type: String,
+      required: true
+    },
+    event_data: {
+      type: Object
+    },
+    counterAmount: {
+      type: Number,
     }
   },
   {
