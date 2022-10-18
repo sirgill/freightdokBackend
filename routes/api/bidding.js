@@ -9,7 +9,6 @@ router.get("/", auth, (req, res) => {
   const { bidReq } = req.query;
 
   const params = JSON.parse(decodeURIComponent(bidReq) || "");
-  console.log("-- params --", params);
   const bid = new Bid(params);
 
   bid
@@ -50,11 +49,13 @@ router.post("/newTrulBidding/:loadNumber", auth, (req, res) => {
   const body = req.body;
   console.log(body)
   const dbPayload = {
-    status: true,
+    status: false,
     loadNumber,
     bidAmount: body.offer_amount,
     vendorName: body.vendorName,
-    ownerOpId: req.user.id
+    ownerOpId: req.user.id,
+    offerStatus: false,
+    loadDetail: body.loadDetail
   }
   const bid = new Bid(dbPayload);
   bid.save()

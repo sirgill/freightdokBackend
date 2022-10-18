@@ -35,18 +35,21 @@ const BidsSchema = new mongoose.Schema(
     },
     offerStatus: {
       type: String,
-      required: true
     },
     event_data: {
       type: Object
     },
     counterAmount: {
       type: Number,
-    }
+    },
+    loadDetail: {
+      type: Object,
+      required: false
+  },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 module.exports = mongoose.model("bids", BidsSchema);
