@@ -39,7 +39,7 @@ router.get("/biddings", (req, res) => {
       res.status(200).json({ totalCount: bid.length, data: bid });
     })
     .catch((err) => {
-      console.log(error.message);
+      console.log(err.message);
       res.status(400).json({ totalCount: 0, data: {}, error: err.message });
     });
 });
@@ -47,7 +47,6 @@ router.get("/biddings", (req, res) => {
 router.post("/newTrulBidding/:loadNumber", auth, (req, res) => {
   const { params: { loadNumber = '' } = {} } = req;
   const body = req.body;
-  console.log(body)
   const dbPayload = {
     status: false,
     loadNumber,
@@ -57,6 +56,15 @@ router.post("/newTrulBidding/:loadNumber", auth, (req, res) => {
     offerStatus: false,
     loadDetail: body.loadDetail
   }
+  saveBid(dbPayload, res)
+})
+
+router.post('/saveChOfferRequestId', auth, (req, res) => {
+  const dbPayload = { ...req.body, status: false, ownerOpId: req.user.id };
+  saveBid(dbPayload, res)
+})
+
+const saveBid = (dbPayload, res) => {
   const bid = new Bid(dbPayload);
   bid.save()
     .then(resp => {
@@ -67,8 +75,8 @@ router.post("/newTrulBidding/:loadNumber", auth, (req, res) => {
       if (err.code === 11000) {
         return res.status(404).json({ success: false, message: `Load Number: ${loadNumber} already present.` })
       }
-      res.status(500).json({ success: false, message: 'Bid not saved.' });
+      res.status(500).json({ success: false, message: 'Bid not saved.', err: err.message });
     })
-})
+}
 
 module.exports = router;

@@ -45,7 +45,10 @@ const BidsSchema = new mongoose.Schema(
     loadDetail: {
       type: Object,
       required: false
-  },
+    },
+    offerRequestId: {
+      type: String,
+    }
   },
   {
     timestamps: true,
