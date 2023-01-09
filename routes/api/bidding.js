@@ -3,12 +3,12 @@ const router = express.Router();
 const auth = require("../../middleware/auth");
 const Bid = require("../../models/Bids");
 const path = require("path");
+const { default: axios } = require("axios");
 
 router.get("/", auth, (req, res) => {
   const { bidReq } = req.query;
 
   const params = JSON.parse(decodeURIComponent(bidReq) || "");
-  console.log("-- params --", params);
   const bid = new Bid(params);
 
   bid
@@ -39,9 +39,44 @@ router.get("/biddings", (req, res) => {
       res.status(200).json({ totalCount: bid.length, data: bid });
     })
     .catch((err) => {
-      console.log(error.message);
+      console.log(err.message);
       res.status(400).json({ totalCount: 0, data: {}, error: err.message });
     });
 });
+
+router.post("/newTrulBidding/:loadNumber", auth, (req, res) => {
+  const { params: { loadNumber = '' } = {} } = req;
+  const body = req.body;
+  const dbPayload = {
+    status: false,
+    loadNumber,
+    bidAmount: body.offer_amount,
+    vendorName: body.vendorName,
+    ownerOpId: req.user.id,
+    offerStatus: false,
+    loadDetail: body.loadDetail
+  }
+  saveBid(dbPayload, res)
+})
+
+router.post('/saveChOfferRequestId', auth, (req, res) => {
+  const dbPayload = { ...req.body, status: false, ownerOpId: req.user.id };
+  saveBid(dbPayload, res)
+})
+
+const saveBid = (dbPayload, res) => {
+  const bid = new Bid(dbPayload);
+  bid.save()
+    .then(resp => {
+      res.status(200).json({ success: true, message: 'Bid saved Successfully.' })
+    })
+    .catch(err => {
+      console.log(err)
+      if (err.code === 11000) {
+        return res.status(404).json({ success: false, message: `Load Number: ${loadNumber} already present.` })
+      }
+      res.status(500).json({ success: false, message: 'Bid not saved.', err: err.message });
+    })
+}
 
 module.exports = router;
