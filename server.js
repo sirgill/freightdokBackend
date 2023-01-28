@@ -49,6 +49,7 @@ app.use('/api/register', require('./routes/api/register'))
 app.use('/privacy-policy', (req, res) => {
     res.sendFile(path.join(__dirname, '/documents/privacyPolicy', 'Privacy_Policy.html'))
 });
+app.use('/api/searchLocationAutocomplete', require('./routes/api/searchLocationAutocomplete'))
 
 // ---------------------------------------------------------------------------
 //$NEWBOOKBIDWEBHOOK-$7867*/
