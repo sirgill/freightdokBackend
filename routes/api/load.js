@@ -273,9 +273,6 @@ router.patch("/modify",
         formdata.bucketFiles = s3Files.data;
       }
 
-
-      console.log("=====>formDataBucketFiles===>", formdata.bucketFiles)
-
       const load = await Load.findOneAndUpdate({ _id }, formdata, { new: true });
       console.log(load)
       return res.json(load);
