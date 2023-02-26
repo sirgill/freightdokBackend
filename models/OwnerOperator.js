@@ -25,6 +25,10 @@ const OwnerOperatorSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'user'
     },
+    isActive: {
+        type: Boolean,
+        default: 1
+    }
 },
     {
         timestamps: true,
