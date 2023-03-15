@@ -33,7 +33,7 @@ const PickUpSchema = new mongoose.Schema(
     },
 
     pickupZip: {
-      type: Number,
+      type: String,
     },
 
     pickupDate: {
@@ -80,7 +80,7 @@ const DropOffSchema = new mongoose.Schema(
     },
 
     dropZip: {
-      type: Number,
+      type: String,
     },
 
     dropDate: {
