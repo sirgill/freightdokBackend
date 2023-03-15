@@ -55,6 +55,11 @@ app.use('/api/searchLocationAutocomplete', require('./routes/api/searchLocationA
 //$NEWBOOKBIDWEBHOOK-$7867*/
 app.post('/newtrul/webhook/v1/request_status_update', (req, res) => {
     const { event_type, event_data: { load: { id } } } = req.body
+    console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+    console.log("+++++++++++++++ Webhook Response +++++++++++++++")
+    console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+    console.log(req.body)
+    console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
     try {
         const { load: { id = '' }, counter_offer: { amount = '' } = {} } = event_data;
 
