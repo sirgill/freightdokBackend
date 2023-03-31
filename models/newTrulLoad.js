@@ -29,7 +29,10 @@ const NewTrulLoad = new mongoose.Schema({
     isDelivered: {
         type: Boolean,
         default: false
-    }
+    },
+    event_data: {
+        type: Object
+    },
 },
     {
         timestamps: true,
