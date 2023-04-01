@@ -9,6 +9,7 @@ const morgan = require("morgan")
 const multipart = require('connect-multiparty');
 const NewTrulLoad = require('./models/newTrulLoad');
 const Bids = require('./models/Bids');
+const { newtrulWebhook } = require('./routes/api/newtrulWebhooks');
 
 const app = express();
 
@@ -53,60 +54,7 @@ app.use('/api/searchLocationAutocomplete', require('./routes/api/searchLocationA
 
 // ---------------------------------------------------------------------------
 //$NEWBOOKBIDWEBHOOK-$7867*/
-app.post('/newtrul/webhook/v1/request_status_update', (req, res) => {
-    const { event_type, event_data: { load: { id } } } = req.body
-    try {
-        const { load: { id = '' }, counter_offer: { amount = '' } = {} } = event_data;
-
-        let wbIsBooked = false
-        if (event_type === 'BOOK_LOAD_SUCCESS') {
-            wbIsBooked = true
-            NewTrulLoad.updateOne({ loadNumber: id }, { wbIsBooked })
-                .then(response => {
-                    if (response) {
-                        res.status(200).json({ success: true, message: 'Load Status Updated at freightdok successfully !' })
-                    }
-                })
-        }
-
-        if (event_type === 'OFFER_ACCEPTED') {
-            Bids.updateOne({ loadNumber: id }, { status: true, offerStatus: event_type, event_data })
-                .then(resp => res.status(200).json({ success: true, message: 'Offer Status Updated at freightdok successfully !' }))
-            return;
-        } else if (event_type === 'OFFER_REJECTED') {
-            Bids.updateOne({ loadNumber: id }, { status: false, offerStatus: event_type, event_data })
-                .then(resp => res.status(200).json({ success: true, message: 'Offer Status Updated at freightdok successfully !' }))
-            return;
-        }
-        else if (event_type === 'COUNTER_OFFER_CREATED') {
-            Bids.findOne({ loadNumber: id })
-                .then(resp => {
-                    let { bidAmount } = resp;
-                    bidAmount = bidAmount + "," + amount;
-                    Bids.updateOne({ loadNumber: id }, { status: false, offerStatus: event_type, event_data, bidLevel: 2, bidAmount })
-                        .then(resp => res.status(200).json({ success: true, message: 'Offer Status Updated at freightdok successfully !' }))
-                    return;
-                })
-        }
-        else if (event_type === 'FINAL_OFFER_CREATED') {
-            Bids.findOne({ loadNumber: id })
-                .then(resp => {
-                    const { final_offer: { amount = undefined } = {} } = event_data;
-                    let { bidAmount } = resp;
-                    bidAmount = bidAmount + "," + amount;
-                    Bids.updateOne({ loadNumber: id }, { status: false, offerStatus: event_type, event_data, bidLevel: 3, bidAmount })
-                        .then(() => res.status(200).json({ success: true, message: 'Offer Status Updated at freightdok successfully !' }))
-                    return;
-                })
-        }
-        else {
-            res.status(200).json({ success: true, message: 'Offer Status Updated at freightdok successfully !' })
-        }
-    }
-    catch (err) {
-        res.status(200).json({ success: true, message: "event_type Acknowledged! at freightdok" })
-    }
-});
+app.post('/newtrul/webhook/v1/request_status_update', newtrulWebhook);
 // ---------------------------------------------------------------------------
 
 app.get('/', (req, res) => res.send('API Running'));

@@ -42,8 +42,7 @@ router.post('/', auth, (req, res) => {
 router.post('/getLocation', auth, (req, res) => {
     const { address = '', state = '', city = '', zip = '' } = req.body
     const combined = address.concat(city).concat(zip);
-
-    axios.get('https://api.opencagedata.com/geocode/v1/json?key=f9ed7a86a75c44698c99da97590c6b4f&q=' + combined)
+    axios.get('https://api.opencagedata.com/geocode/v1/json?key=d371fe6c81514ffabb4e141163ddaa60&q=' + combined)
         .then(({ status, data }) => {
             if (status === 200) {
                 const { status, results = [] } = data;
