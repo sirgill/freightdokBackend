@@ -42,6 +42,10 @@ router.post('/', auth, (req, res) => {
 router.post('/getLocation', auth, (req, res) => {
     const { address = '', state = '', city = '', zip = '' } = req.body
     const combined = address.concat(city).concat(zip);
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
     axios.get('https://api.opencagedata.com/geocode/v1/json?key=d371fe6c81514ffabb4e141163ddaa60&q=' + combined)
         .then(({ status, data }) => {
             if (status === 200) {
