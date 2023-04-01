@@ -44,12 +44,16 @@ const newtrulWebhook = (req, res) => {
         else if (event_type === 'FINAL_OFFER_CREATED') {
             Bids.findOne({ loadNumber: id })
                 .then(resp => {
-                    const { final_offer: { amount = undefined } = {} } = event_data;
-                    let { bidAmount } = resp;
-                    bidAmount = bidAmount + "," + amount;
-                    Bids.updateOne({ loadNumber: id }, { status: false, offerStatus: event_type, event_data, bidLevel: 3, bidAmount })
-                        .then(() => res.status(200).json({ success: true, message: 'Offer Status Updated at freightdok successfully !' }))
-                    return;
+                    if (resp) {
+                        const { final_offer: { amount = undefined } = {} } = event_data;
+                        let { bidAmount } = resp;
+                        bidAmount = bidAmount + "," + amount;
+                        Bids.updateOne({ loadNumber: id }, { status: false, offerStatus: event_type, event_data, bidLevel: 3, bidAmount })
+                            .then(() => res.status(200).json({ success: true, message: 'Offer Status Updated at freightdok successfully !' }))
+                        return;
+                    } else {
+                        res.status(404).json({ success: false, message: 'Load Id not found' })
+                    }
                 })
         }
         else {
