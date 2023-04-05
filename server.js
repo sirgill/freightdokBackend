@@ -7,8 +7,6 @@ const path = require('path');
 const seeder = require('./seeder');
 const morgan = require("morgan")
 const multipart = require('connect-multiparty');
-const NewTrulLoad = require('./models/newTrulLoad');
-const Bids = require('./models/Bids');
 const { newtrulWebhook } = require('./routes/api/newtrulWebhooks');
 
 const app = express();
