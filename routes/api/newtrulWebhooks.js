@@ -7,6 +7,7 @@ const newtrulWebhook = (req, res) => {
     const { event_data } = req.body
     console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
     console.log("+++++++++++++++ Webhook Response +++++++++++++++")
+	console.log(req.body)
     console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
     try {
         const { load: { id = '' }, counter_offer: { amount = '' } = {} } = event_data;
