@@ -7,9 +7,8 @@ const path = require('path');
 const seeder = require('./seeder');
 const morgan = require("morgan")
 const multipart = require('connect-multiparty');
-const NewTrulLoad = require('./models/newTrulLoad');
-const Bids = require('./models/Bids');
 const { newtrulWebhook } = require('./routes/api/newtrulWebhooks');
+const { catchErrors } = require('./utils/utils');
 
 const app = express();
 
@@ -61,4 +60,8 @@ app.get('/', (req, res) => res.send('API Running'));
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => console.log(`Server Started on port ${PORT}`));
+
+app.listen(PORT, () => {
+    catchErrors();
+    console.log(`Server Started on port ${PORT}`)
+});

@@ -26,3 +26,18 @@ const getLoadsStruct = ({ assigned = false, loadNumber, rate, userId, brokerage,
         "status": status
     }
 }
+
+const catchErrors = () => {
+    process.on('uncaughtException', (err) => {
+        console.error('uncaughtException', (err && err.stack) ? err.stack : err);
+    });
+
+    process.on('unhandledRejection', (reason, promise) => {
+        console.log('Unhandled Rejection at:', (reason && reason.stack) ? reason.stack : reason);
+    });
+};
+
+module.exports = {
+    catchErrors,
+    getLoadsStruct
+}
