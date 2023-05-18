@@ -27,7 +27,7 @@ const newtrulWebhook = (req, res) => {
             Bids.updateOne({ loadNumber: id }, { status: true, offerStatus: event_type, event_data })
                 .then(resp => res.status(200).json({ success: true, message: 'Offer Status Updated at freightdok successfully !' }))
             return;
-        } else if (event_type === 'OFFER_REJECTED') {
+        } else if (event_type === 'OFFER_REJECTED' || event_type === 'REJECT_COUNTER_OFFER_SUCCESS') {
             Bids.updateOne({ loadNumber: id }, { status: false, offerStatus: event_type, event_data })
                 .then(resp => res.status(200).json({ success: true, message: 'Offer Status Updated at freightdok successfully !' }))
             return;
