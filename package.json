@@ -1,6 +1,7 @@
 {
   "name": "freightdok",
   "bookbidAPIRefrence": "$7867",
+  "chrobinSonBidsAPIRefrence":"$3536",
   "version": "1.0.0",
   "description": "Freight Workflow Platform for Carriers",
   "main": "server.js",

@@ -56,6 +56,18 @@ app.use('/api/searchLocationAutocomplete', require('./routes/api/searchLocationA
 app.post('/newtrul/webhook/v1/request_status_update', newtrulWebhook);
 // ---------------------------------------------------------------------------
 
+//----------------------------------------
+//chrobinSonBidsAPIRefrence-$3536 
+app.post("/handle-ch-bids", (req, res) => {
+    const messageBody = req.body
+    console.log("-------------------------------")
+    console.log("messageBody : \n", messageBody)
+    console.log("-------------------------------")
+    res.send({ success: true, message: "bid response submitted to freightdok successfully!" });
+})
+//----------------------------------------
+
+
 app.get('/', (req, res) => res.send('API Running'));
 
 const PORT = process.env.PORT || 5000;
