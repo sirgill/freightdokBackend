@@ -4,11 +4,13 @@ const Schema = mongoose.Schema;
 const Onboarding = new Schema({
     email: {
         type: String,
-        required: true
+        required: [true, 'User email required'],
+        unique: true,
     },
     phoneNumber: {
         type: String,
-        required: true
+        required: true,
+        unique: true,
     },
     otp: {
         type: String,
