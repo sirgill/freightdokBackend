@@ -15,6 +15,11 @@ const Onboarding = new Schema({
     },
     isPendingApproval: {
         type: Boolean
+    },
+    message: String,
+    dot: {
+        type: String,
+        required: true
     }
 },
     {
