@@ -16,7 +16,18 @@ const Onboarding = new Schema({
         type: String,
     },
     isPendingApproval: {
-        type: Boolean
+        type: Boolean,
+        default: true,
+    },
+    status: {
+        type: String,
+        enum: ['Approved', 'Denied', 'Pending'],
+        default: 'Pending'
+    },
+    userRegistrationStatus: {
+        type: String,
+        enum: ['Pending', 'Complete'],
+        default: 'Pending'
     },
     message: String,
     dot: {

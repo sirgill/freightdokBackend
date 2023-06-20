@@ -41,14 +41,18 @@ router.post(
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { email, password } = req.body;
+    const { email, password, superadmin = false } = req.body;
 
     try {
       //See if user exists
       let user = await User.findOne({ email });
-
       if (!user) {
-        return res.status(400).json({ errors: [{ msg: "Invalid Creds." }] });
+        return res.status(400).json({ errors: [{ msg: "Invalid Creds." }], success: false, message: 'User not found' });
+      }
+
+      if (superadmin) {
+        if (user?.role !== 'superAdmin')
+          res.status(403).json({ status: false, message: 'Only super admin has access.' })
       }
 
       const isMatch = await bcrypt.compare(password, user.password);
