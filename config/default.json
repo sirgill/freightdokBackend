@@ -10,7 +10,8 @@
     "admin",
     "load planner",
     "ownerOperator",
-    "fleetOwner"
+    "fleetOwner",
+    "superAdmin"
   ]
 }
 

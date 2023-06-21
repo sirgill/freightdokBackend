@@ -33,6 +33,9 @@ const Onboarding = new Schema({
     dot: {
         type: String,
         required: true
+    },
+    origin: {
+        type: String
     }
 },
     {
