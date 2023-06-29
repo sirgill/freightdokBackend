@@ -8,12 +8,13 @@ const bcrypt = require('bcryptjs')
 const User = require("../../models/User");
 
 router.get('/', auth, (req, res) => {
-    try {
-        Onboarding.find({ isPendingApproval: true })
-            .then(resp => res.status(200).send(resp));
-    } catch (error) {
-        res.status(400);
-    }
+    Onboarding.find({ isPendingApproval: true }, (err, result) => {
+        if (err) {
+            res.status(400)
+        } else {
+            res.status(200).send(result)
+        }
+    })
 })
 
 router.post('/', (req, res) => {
