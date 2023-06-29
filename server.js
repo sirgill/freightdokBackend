@@ -60,11 +60,16 @@ app.post('/newtrul/webhook/v1/request_status_update', newtrulWebhook);
 //----------------------------------------
 //chrobinSonBidsAPIRefrence-$3536 
 app.post("/handle-ch-bids", (req, res) => {
-    const messageBody = req.body
-    console.log("-------------------------------")
-    console.log("messageBody : \n", messageBody)
-    console.log("-------------------------------")
-    res.send({ success: true, message: "bid response submitted to freightdok successfully!" });
+    const { username, password, messageBody } = req.body
+    if (username === 'chrobinson' && password === 'chrobdok@123') {
+        console.log("-------------------------------")
+        console.log("messageBody : \n", messageBody)
+        console.log("-------------------------------")
+        res.status(200).send({ success: true, message: "bid response submitted to freightdok successfully!" });
+    }
+    else {
+        res.status(401).send({ success: false, message: "User Not Authorized to publish messages to this handle" })
+    }
 })
 //----------------------------------------
 
