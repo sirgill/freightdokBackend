@@ -36,7 +36,8 @@ const Onboarding = new Schema({
     },
     origin: {
         type: String
-    }
+    },
+    fmcsaDetails: Object
 },
     {
         collection: 'Onboarding'
