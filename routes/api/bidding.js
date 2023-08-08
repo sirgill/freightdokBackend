@@ -34,7 +34,7 @@ router.get("/", auth, (req, res) => {
 });
 
 router.get("/biddings", (req, res) => {
-  Bid.find()
+  Bid.find({ isActive: { $in: [true, undefined] } })
     .then((bid) => {
       res.status(200).json({ totalCount: bid.length, data: bid });
     })

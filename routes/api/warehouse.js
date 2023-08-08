@@ -51,19 +51,10 @@ router.post('/getLocation', auth, (req, res) => {
                     if (!results.length) {
                         return res.status(200).json({ success: false, message: 'Not Found' })
                     }
-                    if (results.length === 1) {
+                    if (results.length) {
                         return res.status(200).json({ success: true, data: results[0].geometry })
                     }
-                    else {
-                        let a = 0; rs = {};
-                        results.forEach(element => {
-                            if (element.confidence > a) {
-                                rs = element
-                                a = element.confidence
-                            }
-                        });
-                        res.status(200).json({ success: true, data: rs.geometry })
-                    }
+
                 }
             }
         });
