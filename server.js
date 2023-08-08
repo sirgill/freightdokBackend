@@ -6,12 +6,9 @@ const cors = require('cors');
 const path = require('path');
 const seeder = require('./seeder');
 const morgan = require("morgan")
-const multipart = require('connect-multiparty');
 const { newtrulWebhook } = require('./routes/api/newtrulWebhooks');
 const { catchErrors } = require('./utils/utils');
-const Bids = require('./models/Bids');
-var cron = require('node-cron');
-const moment = require('moment')
+const { schedulers } = require('./utils/schedulers')
 
 
 const app = express();
@@ -65,34 +62,9 @@ app.get('/', (req, res) => res.send('API Running'));
 
 const PORT = process.env.PORT || 5000;
 
-cron.schedule('* * * * *', async () => {
-    try {
-        console.log('running a task every minute');
-        const dt = await Bids.find({ offerStatus: "OFFER_REJECTED", isActive: true });
-        const update_active_status_ids = [];
-        await Promise.all(dt.map(bid => {
-            const last_updated_at = moment(bid.updatedAt)
-            const current_date = moment();
-            const diff_in_days = moment.duration(current_date.diff(last_updated_at)).days()
-            if (diff_in_days) {
-                console.log(bid._id)
-                update_active_status_ids.push(bid._id);
-            }
-        }))
-        console.log('active status', update_active_status_ids)
-        if (update_active_status_ids.length)
-            Bids.updateMany({ _id: { $in: update_active_status_ids } }, { isActive: false }, (err, docs) => {
-                if (!err)
-                    console.log("Successfully Updated ! Entries to inActive")
-            });
-    }
-    catch (err) {
-        console.log("Err ", err.message)
-    }
-
-});
 
 app.listen(PORT, () => {
     catchErrors();
+    schedulers();
     console.log(`Server Started on port ${PORT}`)
 });
