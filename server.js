@@ -8,7 +8,8 @@ const seeder = require('./seeder');
 const morgan = require("morgan")
 const { newtrulWebhook } = require('./routes/api/newtrulWebhooks');
 const { catchErrors } = require('./utils/utils');
-const { schedulers } = require('./utils/schedulers')
+const { schedulers } = require('./utils/schedulers');
+const chBidsHook = require('./webhooks/chBids');
 
 
 const app = express();
@@ -56,6 +57,7 @@ app.use('/api/onboarding', require('./routes/api/onBoarding'));
 // ---------------------------------------------------------------------------
 //$NEWBOOKBIDWEBHOOK-$7867*/
 app.post('/newtrul/webhook/v1/request_status_update', newtrulWebhook);
+app.post("/handle-ch-bids", chBidsHook);
 // ---------------------------------------------------------------------------
 
 app.get('/', (req, res) => res.send('API Running'));

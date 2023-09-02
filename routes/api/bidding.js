@@ -61,11 +61,11 @@ router.post("/newTrulBidding/:loadNumber", auth, (req, res) => {
 
 router.post('/saveChOfferRequestId', auth, (req, res) => {
   const dbPayload = { ...req.body, status: false, ownerOpId: req.user.id };
-  saveBid(dbPayload, res)
+  return saveBid(dbPayload, res)
 })
 
-const saveBid = (dbPayload, res) => {
-  const bid = new Bid(dbPayload);
+const saveBid = (data, res) => {
+  const bid = new Bid(data);
   bid.save()
     .then(resp => {
       res.status(200).json({ success: true, message: 'Bid saved Successfully.' })
