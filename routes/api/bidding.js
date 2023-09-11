@@ -79,4 +79,19 @@ const saveBid = (data, res) => {
     })
 }
 
+router.delete('/deleteBidByLoadNumber/:loadNumber', auth, (req, res) => {
+  const { params: { loadNumber = '' } = {} } = req;
+  if (!loadNumber) {
+    return res.status(404).json({ status: false, message: 'Invalid Loadnumber' });
+  }
+  Bid.deleteOne({ loadNumber }, (err, result) => {
+    if (err) {
+      return res.status(400).json({ success: false, message: 'Load Not Found', _dbError: err.message });
+    }
+    res.status(200).json({
+      success: true, message: "Successfully Deleted"
+    })
+  })
+})
+
 module.exports = router;

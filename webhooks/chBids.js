@@ -26,11 +26,13 @@ function chBidsHook(req, res) {
         ).then((response) => {
             if (response) {
                 return res.status(202).send({ success: true, message: "bid response submitted to freightdok successfully!" });
+            } else {
+                res.status(404).send({ status: false, message: 'Something went wrong, Please verify the payload' });
             }
-            throw new Error('Bid not found');
+            // throw new Error('Bid not found');
         }).catch(err => {
             console.log('Error saving ch response at web hook', err.message);
-            return res.status(500).json({ success: false, message: 'Error' });
+            return res.status(500).json({ success: false, message: err.message });
         })
     }
     else {
