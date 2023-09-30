@@ -57,7 +57,7 @@ router.get("/invoice_loads", auth, async (req, res) => {
   try {
     const { page = 1, limit = 4, search = '' } = req.query;
     const query = {
-      status: 'Delivered', $or: [
+      status: 'delivered', $or: [
         { invoice_created: false },
         { invoice_created: { $exists: false } }
       ]
@@ -122,7 +122,8 @@ const getLoads = async ({ page = 1, limit = 4, search = '', module = '' }, _id) 
     query['user'] = _id;
 
   const allLoadsQuery = Object.assign({}, query);
-  allLoadsQuery['status'] = { $ne: 'Delivered' };
+  allLoadsQuery['status'] = { $ne: 'empty' };
+  console.log('query', query)
 
   const allLoads = await Load.find(allLoadsQuery);
 
