@@ -42,6 +42,17 @@ router.get("/", auth, async (req, res) => {
   }
 });
 
+router.get('/getUserByRole/:role', auth, (req, res) => {
+  const { role } = req.params;
+  User.find({ role }, (err, data) => {
+    if (err) {
+      res.status(404).json({ success: false, data: [], message: 'No Drivers found' })
+    } else {
+      res.status(200).json({ success: true, data })
+    }
+  })
+})
+
 //@route Post api/users
 //@desc Register user route
 //@access Public
@@ -71,7 +82,7 @@ router.post(
       if (user) {
         return res
           .status(400)
-          .json({ errors: [{ msg: "user already exists" }] });
+          .json({ errors: [{ msg: "user already exists" }], success: false, message: 'User already exists' });
       }
       const newUser = { email, password };
       if (!isAdmin)
@@ -164,11 +175,11 @@ router.delete("/:_id", auth, async (req, res) => {
       throw new Error('Forbidden', 403);
     const user = await User.findOne({ _id });
     if (user.role === 'admin')
-      throw new Error('Cannot delete a user');
+      throw new Error('Cannot delete the user');
     await user.remove();
     return res.status(200).send('User deleted.');
   } catch (e) {
-    res.status(500).send(e.message);
+    res.status(500).json({ success: false, message: e.message });
   }
 });
 
