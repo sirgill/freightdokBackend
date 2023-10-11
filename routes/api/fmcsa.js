@@ -6,6 +6,7 @@ const multer = require("multer");
 const path = require("path");
 const uploader = require("../../utils/uploader");
 const User = require("../../models/User");
+const { FetchSecret, createSecretCred } = require("../../secrets");
 
 router.get('/', auth, async (req, res) => {
     try {
@@ -88,6 +89,38 @@ router.post('/', auth, upload.any(), async (req, res) => {
     }
 })
 
+
+// **************************($78686- Secrets Manager Code)*****************************
+
+router.get("/secret-manager", auth, async (req, res) => {
+    const { orgId } = req.query;
+    const role = req.user.role.toLowerCase()
+    if (role === "admin" || role === "superadmin") {
+        const ans = await FetchSecret("ORGID_" + orgId)
+        res.status(200).json(ans);
+    }
+    else {
+        res.status(401).json({ success: false, message: 'User Not Authorized!' })
+    }
+})
+
+
+router.post("/secret-manager", auth, async (req, res) => {
+    const { update = false } = req.query
+    const orgId = req.user.id // This userid is used as orgId
+    const { secretObject } = req.body;
+    const role = req.user.role.toLowerCase();
+    let ans;
+    if (role === "admin" || role === "superadmin") {
+        ans = await createSecretCred(update, "ORGID_" + orgId, secretObject);
+        res.status(200).json(ans);
+    }
+    else {
+        res.status(401).json({ success: false, message: 'User Not Authorized!' })
+    }
+})
+
+
 router.get("/:id", auth, (req, res) => {
     try {
         const { params: { id = '' } } = req;
@@ -109,5 +142,7 @@ router.get("/:id", auth, (req, res) => {
     }
 
 })
+
+
 
 module.exports = router;

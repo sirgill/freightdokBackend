@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "description": "Freight Workflow Platform for Carriers",
   "main": "server.js",
+  "references":["$78686- Secrets Manager Code"],
   "scripts": {
     "start": "nodemon server",
     "server": "nodemon --ignore client/",
@@ -13,6 +14,8 @@
   "author": "Surinder Gill",
   "license": "MIT",
   "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.427.0",
+    "aws-sdk": "^2.1472.0",
     "axios": "^0.24.0",
     "bcryptjs": "^2.4.3",
     "config": "^3.3.3",

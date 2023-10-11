@@ -10,6 +10,7 @@ const { newtrulWebhook } = require('./routes/api/newtrulWebhooks');
 const { catchErrors } = require('./utils/utils');
 const { schedulers } = require('./utils/schedulers');
 const chBidsHook = require('./webhooks/chBids');
+const { FetchSecret, createSecretCred } = require('./secrets');
 
 
 const app = express();
@@ -62,7 +63,9 @@ app.post("/handle-ch-bids", chBidsHook);
 
 app.get('/', (req, res) => res.send('API Running'));
 
+
 const PORT = process.env.PORT || 5000;
+
 
 
 app.listen(PORT, () => {
@@ -70,3 +73,4 @@ app.listen(PORT, () => {
     schedulers();
     console.log(`Server Started on port ${PORT}`)
 });
+
