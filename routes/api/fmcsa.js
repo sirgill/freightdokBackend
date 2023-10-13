@@ -89,6 +89,13 @@ router.post('/', auth, upload.any(), async (req, res) => {
     }
 })
 
+/*
+    KEY         Value
+    Ch          api key  
+    newtrul     api key
+    mc#         
+
+*/
 
 // **************************($78686- Secrets Manager Code)*****************************
 
@@ -97,7 +104,18 @@ router.get("/secret-manager", auth, async (req, res) => {
     const role = req.user.role.toLowerCase()
     if (role === "admin" || role === "superadmin") {
         const ans = await FetchSecret("ORGID_" + orgId)
-        res.status(200).json(ans);
+        const keys = Object.keys(ans.data);
+        const values = Object.values(ans.data);
+        const data = keys.map((key, i) => {
+            return {
+                integrationName: key,
+                code: values[i],
+                email: values[keys.indexOf('email')] || null,
+                mc: values[keys.indexOf('mc')] || null
+            }
+        })
+        const _data = [data[keys.indexOf('chRobinson')], data[keys.indexOf('newtrul')]]
+        res.status(200).json({ success: true, data: _data, _dbData: ans.data });
     }
     else {
         res.status(401).json({ success: false, message: 'User Not Authorized!' })
@@ -108,11 +126,11 @@ router.get("/secret-manager", auth, async (req, res) => {
 router.post("/secret-manager", auth, async (req, res) => {
     const { update = false } = req.query
     const orgId = req.user.id // This userid is used as orgId
-    const { secretObject } = req.body;
+    const secretObject = req.body;
     const role = req.user.role.toLowerCase();
     let ans;
     if (role === "admin" || role === "superadmin") {
-        ans = await createSecretCred(update, "ORGID_" + orgId, secretObject);
+        ans = await createSecretCred(update === 'true', "ORGID_" + orgId, secretObject);
         res.status(200).json(ans);
     }
     else {
