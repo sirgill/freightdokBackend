@@ -21,6 +21,10 @@ const BidsSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "contact",
     },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
     status: {
       type: Boolean,
       default: false
@@ -53,6 +57,7 @@ const BidsSchema = new mongoose.Schema(
   {
     timestamps: true,
   },
+
 );
 
 module.exports = mongoose.model("bids", BidsSchema);

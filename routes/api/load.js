@@ -57,7 +57,7 @@ router.get("/invoice_loads", auth, async (req, res) => {
   try {
     const { page = 1, limit = 4, search = '' } = req.query;
     const query = {
-      status: 'Delivered', $or: [
+      status: 'delivered', $or: [
         { invoice_created: false },
         { invoice_created: { $exists: false } }
       ]
@@ -122,7 +122,8 @@ const getLoads = async ({ page = 1, limit = 4, search = '', module = '' }, _id) 
     query['user'] = _id;
 
   const allLoadsQuery = Object.assign({}, query);
-  allLoadsQuery['status'] = { $ne: 'Delivered' };
+  allLoadsQuery['status'] = { $ne: 'empty' };
+  console.log('query', query)
 
   const allLoads = await Load.find(allLoadsQuery);
 
@@ -369,16 +370,18 @@ router.get("/user/:user_id", async (req, res) => {
 //@access Private
 
 router.delete('/', auth, function (req, res) {
-  const load_id = req.body.load_id;
-  Load.findOneAndDelete({ _id: load_id }, function (err, load) {
-    if (err) {
-      console.log(err);
-      return res.status(500).json({ msg: "Something went wrong, could not delete object.", load_id: null });
-    }
-    else {
-      return res.json(load);
-    }
-  });
+  const id = req.body.data.load_id;
+  if (id) {
+    Load.findByIdAndDelete({ _id: id }, null, (err, result) => {
+      if (err) {
+        console.log(err.message)
+        return res.status(400).json({ success: false, message: 'Delete unsuccessful', _dbError: err.message });
+      }
+      res.status(200).json({ success: true, message: `Load deleted successfully` })
+    })
+  } else {
+    res.status(404).json({ success: false, message: 'Delete failed. Invalid Load id' })
+  }
 });
 
 //@route Put api/load/pickup

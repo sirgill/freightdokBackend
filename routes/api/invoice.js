@@ -13,7 +13,7 @@ router.post('/', auth, async (req, res) => {
             to
         });
         await invoice.save();
-        await Load.findOneAndUpdate({ _id: load_id }, { invoice_created: true });
+        await Load.findOneAndUpdate({ _id: load_id }, { status: 'delivered' });
         return res.json({});
     } catch (err) {
         return res.status(500).send(err.message);

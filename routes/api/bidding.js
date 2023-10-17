@@ -34,7 +34,7 @@ router.get("/", auth, (req, res) => {
 });
 
 router.get("/biddings", (req, res) => {
-  Bid.find()
+  Bid.find({ isActive: { $in: [true, undefined] } })
     .then((bid) => {
       res.status(200).json({ totalCount: bid.length, data: bid });
     })
@@ -61,11 +61,11 @@ router.post("/newTrulBidding/:loadNumber", auth, (req, res) => {
 
 router.post('/saveChOfferRequestId', auth, (req, res) => {
   const dbPayload = { ...req.body, status: false, ownerOpId: req.user.id };
-  saveBid(dbPayload, res)
+  return saveBid(dbPayload, res)
 })
 
-const saveBid = (dbPayload, res) => {
-  const bid = new Bid(dbPayload);
+const saveBid = (data, res) => {
+  const bid = new Bid(data);
   bid.save()
     .then(resp => {
       res.status(200).json({ success: true, message: 'Bid saved Successfully.' })
@@ -78,5 +78,20 @@ const saveBid = (dbPayload, res) => {
       res.status(500).json({ success: false, message: 'Bid not saved.', err: err.message });
     })
 }
+
+router.delete('/deleteBidByLoadNumber/:loadNumber', auth, (req, res) => {
+  const { params: { loadNumber = '' } = {} } = req;
+  if (!loadNumber) {
+    return res.status(404).json({ status: false, message: 'Invalid Loadnumber' });
+  }
+  Bid.deleteOne({ loadNumber }, (err, result) => {
+    if (err) {
+      return res.status(400).json({ success: false, message: 'Load Not Found', _dbError: err.message });
+    }
+    res.status(200).json({
+      success: true, message: "Successfully Deleted"
+    })
+  })
+})
 
 module.exports = router;

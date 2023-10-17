@@ -52,7 +52,15 @@ const isPhoneValid = (num) => {
     return re.test(String(num).toLowerCase());
 }
 
+const sendJson = (success, message) => {
+    return {
+        success,
+        message
+    }
+}
+
 module.exports = {
+    sendJson,
     createOtp,
     catchErrors,
     isEmailValid,

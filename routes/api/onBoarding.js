@@ -2,7 +2,7 @@ const express = require("express");
 const auth = require("../../middleware/auth");
 const router = express.Router();
 const Onboarding = require('../../models/Onboarding');
-const { createOtp, isEmailValid, isPhoneValid } = require("../../utils/utils");
+const { createOtp, isEmailValid, isPhoneValid, sendJson } = require("../../utils/utils");
 const axios = require('axios');
 const bcrypt = require('bcryptjs')
 const User = require("../../models/User");
@@ -40,7 +40,10 @@ router.post('/', (req, res) => {
                         res.status(403).json({ status: false, message: 'Your registration status is ' + status })
                     }
                 })
-            } else
+            } else if (err.message.includes('phoneNumber_1 dup')) {
+                res.status(404).json(sendJson(false, 'Phone Number already registered.'))
+            }
+            else
                 return res.status(400).json({ success: false, message: err.message });
         }
         else res.status(201).json({ success: true, message: 'Saved Successfully' });
@@ -107,7 +110,10 @@ router.post('/validateOtp', (req, res) => {
             res.status(400).json({ success: true, message: 'Something went wrong', dbError: err.message });
         } else {
             if (!result) {
-                res.status(400).json({ success: true, message: 'Email not found' });
+                return res.status(200)
+            }
+            else if (result?.userRegistrationStatus === 'Complete') {
+                res.status(400).json({ success: false, message: 'User is already registered' })
             }
             else res.sendStatus(200);
         }
