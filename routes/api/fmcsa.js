@@ -7,6 +7,7 @@ const path = require("path");
 const uploader = require("../../utils/uploader");
 const User = require("../../models/User");
 const { FetchSecret, createSecretCred } = require("../../secrets");
+const { authAdmin } = require("../../middleware/permissions");
 
 router.get('/', auth, async (req, res) => {
     try {
@@ -111,7 +112,8 @@ router.get("/secret-manager", auth, async (req, res) => {
                 integrationName: key,
                 code: values[i],
                 email: values[keys.indexOf('email')] || null,
-                mc: values[keys.indexOf('mc')] || null
+                mc: values[keys.indexOf('mc')] || null,
+                token: values[keys.indexOf('token')] || null
             }
         })
         const _data = [data[keys.indexOf('chRobinson')], data[keys.indexOf('newtrul')]]
@@ -123,7 +125,7 @@ router.get("/secret-manager", auth, async (req, res) => {
 })
 
 
-router.post("/secret-manager", auth, async (req, res) => {
+router.post("/secret-manager", auth, authAdmin, async (req, res) => {
     const { update = false } = req.query
     const orgId = req.user.id // This userid is used as orgId
     const secretObject = req.body;
