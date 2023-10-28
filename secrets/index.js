@@ -37,15 +37,16 @@ const FetchSecret = async (orgId) => {
 const createSecretCred = async (update = false, orgId, secretObject) => {
 
     const secret = {
-        [orgId]: [{ integration_name: 'chrobinson', mc: '', api_key: '', token: '' }, { integration_name: 'newtrul', mc: '', api_key: '' }],
+        chRobinson: null,
+        newtrul: null,
+        email: null,
+        mc: null,
     };
 
     const params = {
         [update ? 'SecretId' : 'Name']: secret_name_context + orgId,
         SecretString: JSON.stringify(update ? secretObject : secret)
     };
-
-    console.log("params", params);
 
     let command;
     try {
