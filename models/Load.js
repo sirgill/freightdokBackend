@@ -110,7 +110,14 @@ const LoadSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "user",
   },
-
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "user",
+  },
+  orgId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "organizations",
+  },
   brokerage: {
     type: String,
   },

@@ -67,7 +67,8 @@ router.post(
           id: user.id,
           email,
           role: user.role,
-          name: user.name || 'Sunny'
+          name: user.name,
+          orgId: user.orgId
 
         }
       };

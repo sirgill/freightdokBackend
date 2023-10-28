@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { roles } = require('../config/default.json');
+const Schema = mongoose.Schema;
 
 const UserSchema = new mongoose.Schema({
   name: String,
@@ -7,6 +8,10 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true
+  },
+  orgId: {
+    type: Schema.Types.ObjectId,
+    required: true
   },
   password: {
     type: String,

@@ -22,10 +22,14 @@ const admin_check = async (_id, members) => (members.indexOf((await User.findOne
 router.get("/me", auth, async (req, res) => {
   try {
     const _id = req.user.id;
+    console.log(req.user)
     const query = {};
-    const isAdmin = await admin_check(req.user.id, allowed_members_set_1);
-    if (!isAdmin)
+    const isAdmin = req.user.role === "admin";
+    if (isAdmin)
+      query['orgId'] = req.user.orgId;
+    else
       query['user'] = _id;
+
     const drivers = await Driver.find(query).populate("user", ["name"]);
     const users = await User.find({ role: 'driver' }).select('email');
     if (!drivers) {
@@ -79,7 +83,7 @@ router.post(
         name: firstName + ' ' + lastName
       });
 
-      const status = await Load.update({ _id: { $in: newLoads } }, { $set: { user } }, { multi: true });
+      const status = await Load.updateOne({ _id: { $in: newLoads } }, { $set: { user } }, { multi: true });
       console.log('Status: ', status);
 
       const newDriver = await Driver.create({
@@ -88,9 +92,10 @@ router.post(
         lastName,
         phoneNumber,
         loads,
+        orgId: req.user.orgId
       });
 
-      res.json({ success: true, message: 'Driver Created' });
+      res.json({ success: true, message: 'Driver Created', data: newDriver });
     } catch (err) {
       console.error(err.message);
       res.status(500).send("Server Error");

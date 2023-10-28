@@ -37,7 +37,7 @@ const FetchSecret = async (orgId) => {
 const createSecretCred = async (update = false, orgId, secretObject) => {
 
     const secret = {
-        [orgId]: [{ integration_name: 'chrobinson', mc: '12707', api_key: '$5543455FD' }, { integration_name: 'newtrul', mc: '12707', api_key: '$TestApiKey' }],
+        [orgId]: [{ integration_name: 'chrobinson', mc: '', api_key: '', token: '' }, { integration_name: 'newtrul', mc: '', api_key: '' }],
     };
 
     const params = {

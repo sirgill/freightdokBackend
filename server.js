@@ -34,6 +34,7 @@ app.use(express.static(path.join(__dirname, './documents')));
 app.use(express.static(path.join(__dirname, './documents/privacyPolicy')));
 app.use(morgan('dev'))
 
+app.use('/api/organizations', require('./routes/api/organizations'));
 app.use('/api/users', require('./routes/api/users'));
 app.use('/api/auth', require('./routes/api/auth'));
 app.use('/api/load', require('./routes/api/load'));

@@ -10,6 +10,7 @@ router.post('/', auth, async (req, res) => {
         const invoice = new Invoice({
             load: load_id,
             from,
+            orgId: req.user.orgId,
             to
         });
         await invoice.save();

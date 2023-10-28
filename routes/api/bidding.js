@@ -33,8 +33,20 @@ router.get("/", auth, (req, res) => {
     });
 });
 
-router.get("/biddings", (req, res) => {
-  Bid.find({ isActive: { $in: [true, undefined] } })
+router.get("/biddings", auth, (req, res) => {
+  let match_query;
+  const { role, orgId, id } = req.user;
+
+  console.log("orgId", req.user);
+
+  if (role === "admin")
+    match_query = { orgId };
+  else
+    match_query = { userId: id }
+
+  console.log(match_query);
+
+  Bid.find({ ...match_query, isActive: { $in: [true, undefined] } })
     .then((bid) => {
       res.status(200).json({ totalCount: bid.length, data: bid });
     })
@@ -48,11 +60,13 @@ router.post("/newTrulBidding/:loadNumber", auth, (req, res) => {
   const { params: { loadNumber = '' } = {} } = req;
   const body = req.body;
   const dbPayload = {
+    orgId: req.user.orgId,
     status: false,
     loadNumber,
     bidAmount: body.offer_amount,
     vendorName: body.vendorName,
     ownerOpId: req.user.id,
+    userId: req.user.id,
     offerStatus: false,
     loadDetail: body.loadDetail
   }
@@ -60,7 +74,7 @@ router.post("/newTrulBidding/:loadNumber", auth, (req, res) => {
 })
 
 router.post('/saveChOfferRequestId', auth, (req, res) => {
-  const dbPayload = { ...req.body, status: false, ownerOpId: req.user.id };
+  const dbPayload = { ...req.body, status: false, ownerOpId: req.user.id, userId: req.user.id, orgId: req.user.orgId };
   return saveBid(dbPayload, res)
 })
 

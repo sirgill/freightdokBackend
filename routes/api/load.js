@@ -43,7 +43,8 @@ router.get("/me", auth, async (req, res) => {
   try {
     const {
       error, allLoads, load, limit, total, totalPages, currentPage
-    } = await getLoads(req.query, req.user.id);
+    } = await getLoads(req.query, req.user.id, req.user);
+    console.log(req.user)
     if (error) {
       return res.status(error.status).json({ msg: error.message });
     }
@@ -57,17 +58,18 @@ router.get("/invoice_loads", auth, async (req, res) => {
   try {
     const { page = 1, limit = 4, search = '' } = req.query;
     const query = {
+      orgId: req.user.orgId,
       status: 'delivered', $or: [
         { invoice_created: false },
         { invoice_created: { $exists: false } }
       ]
     };
-    if (search) {
-      const regex = { $regex: to_search, $options: 'i' };
-      query['$or'] = [
-        { loadNumber: regex },
-      ];
-    }
+    // if (search) {
+    //   const regex = { $regex: to_search, $options: 'i' };
+    //   query['$or'] = [
+    //     { loadNumber: regex },
+    //   ];
+    // }
     const total = await Load.countDocuments(query);
     const loads = await Load.find(query)
       // .select("loadNumber brokerage rate rateConfirmation proofDelivery")
@@ -87,7 +89,7 @@ router.get("/invoice_loads", auth, async (req, res) => {
   }
 });
 
-const getLoads = async ({ page = 1, limit = 4, search = '', module = '' }, _id) => {
+const getLoads = async ({ page = 1, limit = 4, search = '', module = '' }, _id, reqUser) => {
   const query = {};
   if (!search) {
     if (!module || (module && module === 'loads')) {
@@ -117,14 +119,19 @@ const getLoads = async ({ page = 1, limit = 4, search = '', module = '' }, _id) 
       // query['status'] = { $ne :'Delivered' };
     }
   }
-  const isAdmin = await admin_check(_id, allowed_members_set_1);
-  if (!isAdmin)
-    query['user'] = _id;
+  const isAdmin = reqUser.role === "admin"
+  console.log(isAdmin);
+  if (isAdmin)
+    query['orgId'] = reqUser.orgId;
+  else
+    query['userId'] = _id;
+
 
   const allLoadsQuery = Object.assign({}, query);
   allLoadsQuery['status'] = { $ne: 'empty' };
-  console.log('query', query)
 
+
+  console.log(allLoadsQuery);
   const allLoads = await Load.find(allLoadsQuery);
 
   // query['$lookup'] = {
@@ -187,6 +194,8 @@ router.post("/", [auth, [check("loadNumber", "Load number is required").not().is
     const { brokerage, loadNumber, rate, pickUp, dropOff } = req.body;
     const load = await Load.create({
       user: req.user.id,
+      userId: req.user.id,
+      orgId: req.user.orgId,
       brokerage,
       loadNumber,
       rate,

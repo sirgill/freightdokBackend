@@ -6,6 +6,8 @@ const bcrypt = require("bcryptjs");
 const config = require("config");
 const auth = require("../../middleware/auth");
 const User = require("../../models/User");
+const OrganizationUsers = require("../../models/OrganizationUsers");
+const Organizations = require("../../models/Organizations");
 
 // Array of user's who can create, read, update and delete
 const allowed_members_set_1 = config.get("roles").filter(member => member !== 'user');
@@ -22,14 +24,22 @@ router.get("/", auth, async (req, res) => {
     const isAdmin = await admin_check(req.user.id, allowed_members_set_1);
     if (!isAdmin)
       throw new Error('Forbidden', 403);
-    const count = await User.countDocuments({ _id: { $ne: [req.user.id] } });
+
+    const OrganizationDetails = await Organizations.findOne({ $or: [{ userId: req.user.id }, { adminId: req.user.id }] });
+
+    let orgUsers = await OrganizationUsers.find({ orgId: OrganizationDetails._id });
+    orgUsers = orgUsers.map(usr => usr.userId);
+
+    const count = await User.countDocuments({ $and: [{ _id: { $ne: [req.user.id] } }, { _id: { $in: orgUsers } }] });
+
     const users = await User
-      .find({ _id: { $ne: [req.user.id] } })
+      .find({ $and: [{ _id: { $ne: [req.user.id] } }, { _id: { $in: orgUsers } }] })
       .limit(limit * 1)
       .sort('-date')
       .skip((page - 1) * limit)
       .select('name email role')
       .exec();
+
     res.json({
       users,
       limit,
@@ -38,7 +48,7 @@ router.get("/", auth, async (req, res) => {
       currentPage: page - 1
     });
   } catch (e) {
-    res.status(500).send(e.message);
+    res.status(500).send({ success: false, message: e.message });
   }
 });
 
@@ -90,12 +100,21 @@ router.post(
       else {
         newUser['role'] = role;
         newUser['created_by'] = req.user.id;
+        newUser['orgId'] = req.user.orgId;
+
       }
       user = new User(newUser);
       //Encrypt passoword
       const salt = await bcrypt.genSalt(10);
       user.password = await bcrypt.hash(password, salt);
-      await user.save();
+      const user_details = await user.save();
+
+      if (user_details) {
+        const org_details = await Organizations.findOne({ adminId: req.user.id });
+        console.log("org_details", org_details)
+        console.log("user_details", user_details)
+        await OrganizationUsers.create({ adminId: req.user.id, userId: user_details._id, orgId: org_details._id })
+      }
       if (!isAdmin) {
         //Return jsonwebtoken
         const payload = {
