@@ -6,9 +6,8 @@ const { createOtp, isEmailValid, isPhoneValid, sendJson } = require("../../utils
 const axios = require('axios');
 const bcrypt = require('bcryptjs')
 const User = require("../../models/User");
-const FMCSA = require("../../models/FMCSA");
 const Organizations = require("../../models/Organizations");
-const mongoose = require("mongoose");
+const { createSecretCred } = require("../../secrets");
 
 
 router.get('/', auth, (req, res) => {
@@ -166,11 +165,12 @@ router.post('/register', (req, res) => {
                                     User.updateOne(
                                         { _id: userDetails._id },
                                         { $set: { orgId: org._id } },
-                                        function (err, result) {
+                                        async function (err, result) {
                                             if (err) {
                                                 console.error("Error updating document: ", err);
                                             } else {
                                                 console.log("Document updated successfully", result);
+                                                await createSecretCred(false, org._id, null);
                                             }
                                         }
                                     );

@@ -29,7 +29,7 @@ const FetchSecret = async (orgId) => {
         return { success: true, data: JSON.parse(response.SecretString) }
     } catch (error) {
         console.log('Error : While storing secrets :', error.message);
-        return { succes: false };
+        return { succes: false, data: {} };
     }
 }
 
@@ -37,10 +37,10 @@ const FetchSecret = async (orgId) => {
 const createSecretCred = async (update = false, orgId, secretObject) => {
 
     const secret = {
-        chRobinson: null,
-        newtrul: null,
-        email: null,
-        mc: null,
+        chRobinson: '',
+        newtrul: '',
+        email: '',
+        mc: '',
     };
 
     const params = {
@@ -57,7 +57,7 @@ const createSecretCred = async (update = false, orgId, secretObject) => {
 
         const response = await client.send(command);
         console.log('Secret created successfully:', response);
-        return { succes: true, data: response };
+        return { success: true, data: response };
     } catch (err) {
         console.error('Error creating secret:', err);
         return { success: false, message: err.message }
