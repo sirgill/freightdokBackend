@@ -37,14 +37,10 @@ router.get("/biddings", auth, (req, res) => {
   let match_query;
   const { role, orgId, id } = req.user;
 
-  console.log("orgId", req.user);
-
   if (role === "admin")
     match_query = { orgId };
   else
     match_query = { userId: id }
-
-  console.log(match_query);
 
   Bid.find({ ...match_query, isActive: { $in: [true, undefined] } })
     .then((bid) => {

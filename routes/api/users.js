@@ -27,6 +27,9 @@ router.get("/", auth, async (req, res) => {
 
     const OrganizationDetails = await Organizations.findOne({ $or: [{ userId: req.user.id }, { adminId: req.user.id }] });
 
+    if (!OrganizationDetails) {
+      return res.status(400).json({ message: 'You are not registered as an organization. Please contact admin' });
+    }
     let orgUsers = await OrganizationUsers.find({ orgId: OrganizationDetails._id });
     orgUsers = orgUsers.map(usr => usr.userId);
 
