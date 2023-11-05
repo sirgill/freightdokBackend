@@ -35,7 +35,7 @@ router.get("/", auth, (req, res) => {
 
 router.get("/biddings", auth, (req, res) => {
   let match_query;
-  const { role, orgId, id } = req.user;
+  const { role, orgId, id } = req.user || {};
 
   if (role === "admin")
     match_query = { orgId };
@@ -51,6 +51,21 @@ router.get("/biddings", auth, (req, res) => {
       res.status(400).json({ totalCount: 0, data: {}, error: err.message });
     });
 });
+
+/**
+ * {IMPORTANT} - This route is To be used strictly in babylonion server
+ */
+router.get("/allBiddingsForBabylonion", (req, res) => {
+  Bid.find({ isActive: { $in: [true, undefined] } })
+    .then((bid) => {
+      res.status(200).json({ totalCount: bid.length, data: bid });
+    })
+    .catch((err) => {
+      console.log(err.message);
+      res.status(400).json({ totalCount: 0, data: {}, error: err.message });
+    });
+});
+
 
 router.post("/newTrulBidding/:loadNumber", auth, (req, res) => {
   const { params: { loadNumber = '' } = {} } = req;
