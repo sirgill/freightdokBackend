@@ -37,11 +37,12 @@ router.get("/", auth, (req, res) => {
 router.get("/biddings", auth, async (req, res) => {
   let match_query;
   const { role, orgId, id } = req.user || {};
+  const { page = 1, limit = 5 } = req.query;
 
   if (!role.includes('superAdmin')) {
     const result = await FetchSecret(orgId);
     if (!result.success) {
-      return res.status(404).json({ success: false, data: [], message: 'Please enter Broker credentials in the Carrier Profile Tab to see all the Loads available' })
+      return res.status(403).json({ success: false, data: [], message: 'Please enter Broker credentials in the Carrier Profile to see all the Loads available' })
     }
   }
 
@@ -50,9 +51,18 @@ router.get("/biddings", auth, async (req, res) => {
   else
     match_query = { userId: id }
 
-  Bid.find({ ...match_query, isActive: { $in: [true, undefined] } })
+  const query = { ...match_query, isActive: { $in: [true, undefined] } }
+  Bid.find(query)
+    .sort({ createdAt: -1 })
+    .skip((page - 1 || 0) * limit)
+    .limit(+limit)
     .then((bid) => {
-      res.status(200).json({ totalCount: bid.length, data: bid });
+      Bid.countDocuments(query).exec((count_error, count) => {
+        if (count_error) {
+          return res.json(count_error);
+        }
+        return res.status(200).json({ data: bid, totalCount: count, page, limit });
+      });
     })
     .catch((err) => {
       console.log(err.message);
