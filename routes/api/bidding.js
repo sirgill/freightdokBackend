@@ -4,6 +4,7 @@ const auth = require("../../middleware/auth");
 const Bid = require("../../models/Bids");
 const path = require("path");
 const { default: axios } = require("axios");
+const { FetchSecret } = require("../../secrets");
 
 router.get("/", auth, (req, res) => {
   const { bidReq } = req.query;
@@ -33,11 +34,18 @@ router.get("/", auth, (req, res) => {
     });
 });
 
-router.get("/biddings", auth, (req, res) => {
+router.get("/biddings", auth, async (req, res) => {
   let match_query;
   const { role, orgId, id } = req.user || {};
 
-  if (role === "admin")
+  if (!role.includes('superAdmin')) {
+    const result = await FetchSecret(orgId);
+    if (!result.success) {
+      return res.status(404).json({ success: false, data: [], message: 'Please enter Broker credentials in the Carrier Profile Tab to see all the Loads available' })
+    }
+  }
+
+  if (role === "admin" || role === 'superAdmin')
     match_query = { orgId };
   else
     match_query = { userId: id }
