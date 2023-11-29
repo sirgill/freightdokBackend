@@ -3,8 +3,8 @@ const router = express.Router();
 const auth = require("../../middleware/auth");
 const Bid = require("../../models/Bids");
 const path = require("path");
-const { default: axios } = require("axios");
 const { FetchSecret } = require("../../secrets");
+const { ROLE_NAMES } = require("../../middleware/permissions");
 
 router.get("/", auth, (req, res) => {
   const { bidReq } = req.query;
@@ -39,7 +39,7 @@ router.get("/biddings", auth, async (req, res) => {
   const { role, orgId, id } = req.user || {};
   const { page = 1, limit = 5 } = req.query;
 
-  if (!role.includes('superAdmin')) {
+  if (!role.includes(ROLE_NAMES.superAdmin)) {
     const result = await FetchSecret(orgId);
     if (!result.success) {
       return res.status(403).json({ success: false, data: [], message: 'Please enter Broker credentials in the Carrier Profile to see all the Loads available' })

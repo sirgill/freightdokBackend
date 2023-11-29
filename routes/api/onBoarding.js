@@ -113,12 +113,11 @@ router.delete('/:id', auth, (req, res) => {
 router.post('/validateOtp', (req, res) => {
     const { email } = req.body;
     Onboarding.findOne({ email }, (err, result) => {
-        console.log(result)
         if (err) {
             res.status(400).json({ success: true, message: 'Something went wrong', dbError: err.message });
         } else {
             if (!result) {
-                return res.status(200)
+                return res.send(200)
             }
             else if (result?.userRegistrationStatus === 'Complete') {
                 res.status(400).json({ success: false, message: 'User is already registered' })
@@ -129,7 +128,11 @@ router.post('/validateOtp', (req, res) => {
 })
 
 router.post('/register', (req, res) => {
-    const { email, password, otp } = req.body;
+    const { email, password, otp, firstName, lastName = '' } = req.body;
+    let name = firstName;
+    if (lastName) {
+        name += " " + lastName
+    }
     //Verify otp
     Onboarding.findOne({ email }, (err, result) => {
         if (err || !result) {
@@ -150,7 +153,7 @@ router.post('/register', (req, res) => {
                         if (err) {
                             console.log('Error hashing password', err.message);
                         } else {
-                            const user = new User({ email, password: hash, role: 'admin', dot, phone: phoneNumber, orgId: null });
+                            const user = new User({ email, password: hash, role: 'admin', dot, phone: phoneNumber, orgId: null, name });
 
 
                             user.save(async (err, userDetails) => {
