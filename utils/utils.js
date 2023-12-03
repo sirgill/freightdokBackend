@@ -52,10 +52,11 @@ const isPhoneValid = (num) => {
     return re.test(String(num).toLowerCase());
 }
 
-const sendJson = (success, message) => {
+const sendJson = (success, message, ...rest) => {
     return {
         success,
-        message
+        message,
+        ...(rest || {})
     }
 }
 

@@ -7,7 +7,8 @@ const path = require("path");
 const uploader = require("../../utils/uploader");
 const User = require("../../models/User");
 const { FetchSecret, createSecretCred } = require("../../secrets");
-const { authAdmin } = require("../../middleware/permissions");
+const { authAdmin, ROLE_NAMES } = require("../../middleware/permissions");
+const { sendJson } = require("../../utils/utils");
 
 router.get('/', auth, async (req, res) => {
     try {
@@ -100,25 +101,25 @@ router.post('/', auth, upload.any(), async (req, res) => {
 
 // **************************($78686- Secrets Manager Code)*****************************
 
-router.get("/secret-manager", auth, async (req, res) => {
+const generateTabularFromSecrets = (awsData = {}) => {
+    const arr = []
+    for (let key in awsData) {
+        if (typeof awsData[key] === 'object') {
+            arr.push({ integrationName: key, ...awsData[key] })
+        }
+    }
+    return arr;
+}
+
+router.get("/secret-manager", async (req, res) => {
     const { orgId } = req.query;
     const role = req.user.role.toLowerCase()
     if (role === "admin" || role === "superadmin") {
         const ans = await FetchSecret(orgId)
         if (ans.success) {
-            const keys = Object.keys(ans?.data || {});
-            const values = Object.values(ans?.data || {});
-            const data = (keys || []).map((key, i) => {
-                return {
-                    integrationName: key,
-                    code: values[i] || '',
-                    email: values[keys.indexOf('email')] || null,
-                    mc: values[keys.indexOf('mc')] || null,
-                    token: values[keys.indexOf('token')] || null
-                }
-            })
-            const _data = [data[keys.indexOf('chRobinson')], data[keys.indexOf('newtrul')]]
-            res.status(200).json({ success: true, data: _data, _dbData: ans.data });
+            const tableData = generateTabularFromSecrets(ans.data);
+            // const _data = [data[keys.indexOf('chRobinson')], data[keys.indexOf('newtrul')]]
+            res.status(200).json({ success: true, data: tableData, _dbData: ans.data });
         } else {
             res.status(200).json({ data: [] });
         }
@@ -134,14 +135,32 @@ router.post("/secret-manager", auth, authAdmin, async (req, res) => {
     const orgId = req.user.orgId // This userid is used as orgId
     const secretObject = req.body;
     const role = req.user.role.toLowerCase();
-    let ans;
-    if (role === "admin" || role === "superadmin") {
-        ans = await createSecretCred(update === 'true', orgId, secretObject);
-        res.status(200).json(ans);
+    const allSecretKeys = await FetchSecret(orgId),
+        { data, success } = allSecretKeys;
+    if (success) {
+        /**
+         * Override the object got from UI with old data.
+         */
+        const newData = { ...data, ...secretObject };
+        let ans;
+        if (role === ROLE_NAMES.admin || role === ROLE_NAMES.superAdmin) {
+            /**
+             * Only admins and super admins can save or update carrier profiles data
+             */
+            ans = await createSecretCred(update === 'true', orgId, newData);
+            res.status(200).json(ans);
+        }
+        else {
+            /**
+             * Unauthorized Error.
+             */
+            res.status(401).json({ success: false, message: 'User Not Authorized!' })
+        }
+    } else {
+        // Error response
+        res.status(404).json(sendJson(false, 'Error Saving. Please try later', data))
     }
-    else {
-        res.status(401).json({ success: false, message: 'User Not Authorized!' })
-    }
+
 })
 
 
