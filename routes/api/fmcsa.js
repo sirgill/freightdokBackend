@@ -37,6 +37,20 @@ router.get('/', auth, async (req, res) => {
 });
 
 
+/**
+ * ENDPOINT to be used only for go-lang
+ */
+router.get("/golang-secret-manager", async (req, res) => {
+    const { orgId } = req.query;
+    const ans = await FetchSecret(orgId)
+    if (ans.success) {
+        console.log('db data', ans.data)
+        // const _data = [data[keys.indexOf('chRobinson')], data[keys.indexOf('newtrul')]]
+        res.status(200).json({ success: true, data: ans.data });
+    } else {
+        res.status(200).json({ data: [] });
+    }
+})
 
 const getFMCSACarrierProfileProps = (content) => {
     if (!content) {
@@ -111,7 +125,7 @@ const generateTabularFromSecrets = (awsData = {}) => {
     return arr;
 }
 
-router.get("/secret-manager", async (req, res) => {
+router.get("/secret-manager", auth, async (req, res) => {
     const { orgId } = req.query;
     const role = req.user.role.toLowerCase()
     if (role === "admin" || role === "superadmin") {
@@ -185,7 +199,6 @@ router.get("/:id", auth, (req, res) => {
     }
 
 })
-
 
 
 module.exports = router;
