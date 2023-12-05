@@ -25,12 +25,12 @@ router.get("/", auth, async (req, res) => {
     if (!isAdmin)
       throw new Error('Forbidden', 403);
 
-    const OrganizationDetails = await Organizations.findOne({ $or: [{ userId: req.user.id }, { adminId: req.user.id }] });
+    // const OrganizationDetails = await Organizations.findOne({ $or: [{ userId: req.user.id }, { adminId: req.user.id }] });
 
-    if (!OrganizationDetails) {
-      return res.status(400).json({ message: 'You are not registered as an organization. Please contact admin' });
-    }
-    let orgUsers = await OrganizationUsers.find({ orgId: OrganizationDetails._id });
+    // if (!OrganizationDetails) {
+    //   return res.status(400).json({ message: 'You are not registered as an organization. Please contact admin' });
+    // }
+    let orgUsers = await OrganizationUsers.find({ orgId: req.user.orgId });
     orgUsers = orgUsers.map(usr => usr.userId);
 
     const count = await User.countDocuments({ $and: [{ _id: { $ne: [req.user.id] } }, { _id: { $in: orgUsers } }] });

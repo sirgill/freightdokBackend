@@ -4,7 +4,7 @@ const router = express.Router();
 const Organizations = require('../../models/Organizations');
 
 
-router.get('/', auth, (req, resp) => {
+router.get('/', (req, resp) => {
     Organizations.find({}).then((response) => {
         resp.status(200).send({ success: true, data: response });
     }).catch(err => {
