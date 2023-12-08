@@ -128,7 +128,7 @@ router.post('/validateOtp', (req, res) => {
 })
 
 router.post('/register', (req, res) => {
-    const { email, password, otp, firstName, lastName = '' } = req.body;
+    const { email, password, otp, firstName, lastName = null } = req.body;
     let name = firstName;
     if (lastName) {
         name += " " + lastName
@@ -153,7 +153,7 @@ router.post('/register', (req, res) => {
                         if (err) {
                             console.log('Error hashing password', err.message);
                         } else {
-                            const user = new User({ email, password: hash, role: 'admin', dot, phone: phoneNumber, orgId: null, name });
+                            const user = new User({ email, password: hash, role: 'admin', dot, phone: phoneNumber, orgId: null, name, firstName, lastName });
 
 
                             user.save(async (err, userDetails) => {
