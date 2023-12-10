@@ -115,8 +115,20 @@ router.post(
       if (user_details) {
         const org_details = await Organizations.findOne({ adminId: req.user.id });
         console.log("org_details", org_details)
-        console.log("user_details", user_details)
-        await OrganizationUsers.create({ adminId: req.user.id, userId: user_details._id, orgId: org_details._id })
+        /**
+         * Check if org_details exists otherwise delete the user from user table and return response
+         */
+        if (org_details)
+          await OrganizationUsers.create({ adminId: req.user.id, userId: user_details._id, orgId: org_details._id })
+        else {
+          return User.findByIdAndDelete(user_details._id, (err, result) => {
+            if (err) {
+              return res.status(500).json({ message: 'No Organization found. Contact Super Admin' })
+            } else {
+              return res.status(404).json({ message: 'No Organization found for you in records. User not saved.' })
+            }
+          });
+        }
       }
       if (!isAdmin) {
         //Return jsonwebtoken
