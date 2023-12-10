@@ -41,7 +41,7 @@ router.get("/biddings", auth, async (req, res) => {
 
   if (!role.includes(ROLE_NAMES.superAdmin)) {
     const result = await FetchSecret(orgId);
-    if (!result.success) {
+    if (!result.isValid) {
       return res.status(403).json({ success: false, data: [], message: 'Please enter Broker credentials in the Carrier Profile to see all the Loads available' })
     }
   }

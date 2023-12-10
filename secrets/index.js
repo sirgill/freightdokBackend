@@ -26,9 +26,16 @@ const FetchSecret = async (orgId) => {
             })
         );
         console.log("Response :", response.SecretString)
-        return { success: true, data: JSON.parse(response.SecretString) }
+        const data = JSON.parse(response.SecretString);
+        let isValid = true;
+        for (let i in data) {
+            if (!data[i] && i !== 'mc' && i !== 'email') {
+                isValid = false
+            }
+        }
+        return { success: true, data, isValid }
     } catch (error) {
-        console.log('Error : While storing secrets :', error.message);
+        console.log('Error : While fetching secrets :', error.message);
         return { succes: false, data: {} };
     }
 }
@@ -39,8 +46,6 @@ const createSecretCred = async (update = false, orgId, secretObject) => {
     const secret = {
         chRobinson: '',
         newtrul: '',
-        email: '',
-        mc: '',
     };
 
     const params = {
