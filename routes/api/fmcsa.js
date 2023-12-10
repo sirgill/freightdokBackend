@@ -121,9 +121,32 @@ const generateTabularFromSecrets = (awsData = {}) => {
         if (typeof awsData[key] === 'object') {
             arr.push({ integrationName: key, ...awsData[key] })
         }
+        if (key.toLowerCase() === "chrobinson" && typeof awsData[key] === 'string') {
+            arr.push({ integrationName: key, clientId: "", clientSecret: "", code: "", email: "", mc: "" })
+        }
+        if (key === "newtrul" && typeof awsData[key] === 'string') {
+            arr.push({ integrationName: key, code: "", email: "", mc: "" })
+        }
+
     }
     return arr;
 }
+
+const defaultCreds = [
+    {
+        "integrationName": "newtrul",
+        "mc": "",
+        "email": "",
+        "code": ""
+    },
+    {
+        "integrationName": "chRobinson",
+        "mc": "",
+        "email": "",
+        "clientId": "",
+        "clientSecret": ""
+    }
+]
 
 router.get("/secret-manager", auth, async (req, res) => {
     const { orgId } = req.query;
@@ -133,7 +156,7 @@ router.get("/secret-manager", auth, async (req, res) => {
         if (ans.success) {
             const tableData = generateTabularFromSecrets(ans.data);
             // const _data = [data[keys.indexOf('chRobinson')], data[keys.indexOf('newtrul')]]
-            res.status(200).json({ success: true, data: tableData, _dbData: ans.data });
+            res.status(200).json({ success: true, data: tableData.length ? tableData : defaultCreds, _dbData: ans.data });
         } else {
             res.status(200).json({ data: [] });
         }
