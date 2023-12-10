@@ -5,7 +5,12 @@ const Organizations = require('../../models/Organizations');
 
 
 router.get('/', (req, resp) => {
-    Organizations.find({})
+    const { orgId } = req.query
+    let queryParams = {}
+    if (orgId) {
+        Object.assign(queryParams, { _id: orgId })
+    }
+    Organizations.find(queryParams)
         .populate('adminId')
         .exec((err, organizations) => {
             if (err) {
