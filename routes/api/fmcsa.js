@@ -162,7 +162,7 @@ router.get("/secret-manager", auth, async (req, res) => {
         }
     }
     else {
-        res.status(401).json({ success: false, message: 'User Not Authorized!' })
+        res.status(403).json({ success: false, message: 'Forbidden!' })
     }
 })
 
