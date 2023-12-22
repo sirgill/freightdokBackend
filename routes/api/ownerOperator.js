@@ -68,17 +68,23 @@ router.get('/:id', auth, authAdmin, (req, res) => {
     })
 })
 
-router.delete('/:id', auth, authAdmin, (req, res) => {
+router.delete('/:id', auth, authAdmin, async (req, res) => {
     const { params: { id = '' } = {} } = req;
     if (!id) {
         return res.status(404).json({ message: 'ID does not exists' })
     }
-    OwnerOp.findByIdAndDelete(id)
+    User.findByIdAndDelete(id)
         .then(result => {
             if (result)
                 res.status(200).json({ message: 'Deleted successfully!' });
+            else {
+                res.status(400).json({ message: 'Delete unsuccessful. Please try later.' })
+            }
         })
-        .catch(err => console.log(err))
+        .catch(err => {
+            console.log(err)
+            res.status(500).json({ _dbError: err.message })
+        })
 })
 
 module.exports = router;

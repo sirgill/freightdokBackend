@@ -40,7 +40,7 @@ router.get("/", auth, async (req, res) => {
       .limit(limit * 1)
       .sort('-date')
       .skip((page - 1) * limit)
-      .select('name email role')
+      .select('name email role firstName lastName')
       .exec();
 
     res.json({
