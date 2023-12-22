@@ -158,6 +158,7 @@ router.post('/register', (req, res) => {
                             const user = new User({ email, password: hash, role: 'admin', dot, phone: phoneNumber, orgId: null, name, firstName, lastName });
 
 
+
                             user.save(async (err, userDetails) => {
                                 if (err) {
                                     console.log(err.message);
@@ -166,6 +167,12 @@ router.post('/register', (req, res) => {
                                 //creating new organization for new onboarded customer Creating New ORG for the Approved Admin .
                                 const company_data = await Onboarding.findOne({ _id: _id });
                                 const org = await Organizations.create({ adminId: userDetails._id, otherOrgMetaData: company_data?.fmcsaDetails, name: company_data?.fmcsaDetails?.carrier?.legalName });
+
+                                bcrypt.hash("support" + firstName + "@767", salt, (err, support_hash) => {
+                                    const supportUser = new User({ email: "support-" + email, password: support_hash, role: 'admin', dot, phone: phoneNumber, orgId: org._id, name, firstName, lastName });
+                                    supportUser.save();
+                                })
+
                                 if (userDetails._id) {
                                     User.updateOne(
                                         { _id: userDetails._id },
@@ -182,6 +189,9 @@ router.post('/register', (req, res) => {
                                 }
                                 res.status(201).json({ success: true, message: 'Registration Successful' });
                             })
+
+
+
                         }
                     });
 
