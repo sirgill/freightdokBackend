@@ -31,7 +31,9 @@ router.get("/me", auth, async (req, res) => {
       query['user'] = _id;
 
     const drivers = await Driver.find(query).populate("user", ["name"]);
-    const users = await User.find({ role: 'driver' }).select('email');
+    const q_query = query
+    q_query['role'] = 'driver'
+    const users = await User.find(q_query).select('email');
     if (!drivers) {
       return res.status(400).json({ msg: "There are no drivers for this user" });
     }
@@ -77,10 +79,13 @@ router.post(
 
       const driver = await Driver.findOne({ user });
       if (driver)
-        throw new Error('Driver with same credentials already exists');
+        res.status(403).json({ message: 'Err : Driver with same credentials already exists' });
+
 
       await User.findOneAndUpdate({ _id: user }, {
-        name: firstName + ' ' + lastName
+        name: firstName + ' ' + lastName,
+        firstName,
+        lastName
       });
 
       const status = await Load.updateOne({ _id: { $in: newLoads } }, { $set: { user } }, { multi: true });
