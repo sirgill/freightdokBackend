@@ -4,6 +4,18 @@ const auth = require("../../middleware/auth");
 const Invoice = require("../../models/Invoice");
 const Load = require("../../models/Load");
 
+router.post('/moveBackToMyLoads', auth, (req, res) => {
+    const { id, status } = req.body;
+    console.log(id, status);
+    Load.findOneAndUpdate({ _id: id }, { status, invoice_created: false }, null, (err, result) => {
+        if (err) {
+            res.status(400).json({ message: 'Could not Update Status', _dbError: err.message })
+        } else {
+            res.status(201).json({ message: 'Successfully Updated' })
+        }
+    })
+})
+
 router.post('/', auth, async (req, res) => {
     try {
         const { from, to, load_id } = req.body;
