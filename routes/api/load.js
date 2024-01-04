@@ -44,7 +44,6 @@ router.get("/me", auth, async (req, res) => {
     const {
       error, allLoads, load, limit, total, totalPages, currentPage
     } = await getLoads(req.query, req.user.id, req.user);
-    console.log(req.user)
     if (error) {
       return res.status(error.status).json({ msg: error.message });
     }
@@ -93,7 +92,7 @@ const getLoads = async ({ page = 1, limit = 4, search = '', module = '' }, _id, 
   const query = {};
   if (!search) {
     if (!module || (module && module === 'loads')) {
-      query['status'] = { $ne: 'Delivered' };
+      query['status'] = { $nin: ['Delivered', 'delivered'] };
     } else if (module && module === 'history') {
       query['invoice_created'] = true;
     }
@@ -120,7 +119,6 @@ const getLoads = async ({ page = 1, limit = 4, search = '', module = '' }, _id, 
     }
   }
   const isAdmin = reqUser.role === "admin"
-  console.log(isAdmin);
   if (isAdmin)
     query['orgId'] = reqUser.orgId;
   else
@@ -131,7 +129,6 @@ const getLoads = async ({ page = 1, limit = 4, search = '', module = '' }, _id, 
   allLoadsQuery['status'] = { $ne: 'empty' };
 
 
-  console.log(allLoadsQuery);
   const allLoads = await Load.find(allLoadsQuery);
 
   // query['$lookup'] = {
