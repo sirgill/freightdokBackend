@@ -84,7 +84,7 @@ router.post(
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, firstName, lastName } = req.body;
     const isAdmin = await admin_check(req.user.id, allowed_members_set_1);
     if (!isAdmin && !name) {
       return res.status(400).json({ errors: [{ msg: "Name is required" }] });
@@ -99,7 +99,7 @@ router.post(
       }
       const newUser = { email, password };
       if (!isAdmin)
-        newUser['name'] = name;
+        newUser['name'] = name || `${firstName} ${lastName || ''}`;
       else {
         newUser['role'] = role;
         newUser['created_by'] = req.user.id;
@@ -114,7 +114,7 @@ router.post(
 
       if (user_details) {
         const org_details = await Organizations.findOne({ adminId: req.user.id });
-        console.log("org_details", org_details)
+        console.log("org_details", org_details._id, org_details.name)
         /**
          * Check if org_details exists otherwise delete the user from user table and return response
          */
@@ -154,6 +154,45 @@ router.post(
     }
   }
 );
+
+router.put('/changePassword', auth, async (req, res) => {
+  const { pass: newPass, confirmPass, currentPass } = req.body;
+  if (newPass !== confirmPass) {
+    return res.status(400).json({ message: "Passwords do not match" })
+  }
+
+  const { email } = req.user;
+  const salt = bcrypt.genSaltSync(10);
+
+  User.findOne({ email }, (err, result) => {
+    if (err) {
+      res.status(404).json({ message: 'User not found', _dbError: err });
+    } else {
+      const { password } = result;
+      // Compare user current password if valid
+      bcrypt.compare(currentPass, password, (err, success) => {
+        if (success) {
+          // If valid current password
+          bcrypt.hash(newPass, salt, (err, hash) => {
+            if (err) {
+              res.status(500).json({ message: 'Password not changed. Please try later', _dbError: err });
+            } else {
+              User.findOneAndUpdate({ email }, { password: hash }, (err, result) => {
+                if (err) {
+                  return res.status(404).json({ message: 'User not found' });
+                }
+                res.status(201).json({ message: 'Password Changed Successfully' })
+              })
+            }
+          })
+        } else {
+          // Wrong current password
+          res.status(500).json({ message: 'Current Password is not valid', _dbError: err });
+        }
+      })
+    }
+  })
+})
 
 //@route Post api/users/:_id
 //@desc Update user
