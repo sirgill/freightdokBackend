@@ -55,6 +55,7 @@ app.use('/privacy-policy', (req, res) => {
 });
 app.use('/api/searchLocationAutocomplete', require('./routes/api/searchLocationAutocomplete'))
 app.use('/api/onboarding', require('./routes/api/onBoarding'));
+app.use('/api/forgotPassword', require('./routes/api/forgotPasswordOtp'));
 
 // ---------------------------------------------------------------------------
 //$NEWBOOKBIDWEBHOOK-$7867*/

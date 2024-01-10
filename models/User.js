@@ -43,5 +43,15 @@ const UserSchema = new mongoose.Schema({
     ref: "user",
   }
 });
+UserSchema.statics.checkUserExistsByEmail = async function (email, callback) {
+  return new Promise((resolve) => {
+    mongoose.models['user'].count({ email }, function (err, result) {
+      if (err) {
+        resolve(false)
+      }
+      resolve(result > 0);
+    })
+  })
+}
 
 module.exports = User = mongoose.model('user', UserSchema);
