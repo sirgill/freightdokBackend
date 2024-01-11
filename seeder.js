@@ -1,7 +1,7 @@
 const User = require("./models/User");
 const bcrypt = require("bcryptjs");
 
-module.exports = async function() {
+module.exports = async function () {
     try {
         const email = process.env.ADMIN_EMAIL || 'admin@freightdok.com';
         const pwd = process.env.ADMIN_PWD || 'test12';

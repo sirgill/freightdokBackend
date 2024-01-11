@@ -24,14 +24,23 @@ router.post('/', async (req, res) => {
     const otp = createOtp();
     const forgotPassword = new ForgotPasswordOtp({ otp, email, expired: false })
 
+    ForgotPasswordOtp.findOneAndDelete({ email }, (err) => {
+        if (err) {
+            return res.status(500).json({ message: 'Error sending OTP', _dbError: err.message })
+        }
+    })
+
     axios.post(url, { email, otp })
         .then(async resp => {
             console.log('OTP sent to', email);
             await forgotPassword.save();
-            return res.status(resp.status).json({ message: 'OTP sent' });
+            return res.status(resp.status).json({ message: 'OTP sent to ' + email });
         })
         .catch(err => {
             console.log(err.message);
+            if (err.message.includes('email_1 dup')) {
+                return res.status(403).json({ message: '' })
+            }
             res.status(500).json(sendJson(false, 'Error Sending OTP. Please try later.'));
         })
 })
