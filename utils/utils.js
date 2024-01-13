@@ -60,11 +60,14 @@ const sendJson = (success, message, ...rest) => {
     }
 }
 
+const MAIL_SERVER_ADDRESS = 'https://mail.freightdok.io';
+
 module.exports = {
     sendJson,
     createOtp,
     catchErrors,
     isEmailValid,
     isPhoneValid,
-    getLoadsStruct
+    getLoadsStruct,
+    MAIL_SERVER_ADDRESS,
 }

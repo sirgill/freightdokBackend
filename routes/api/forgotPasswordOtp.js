@@ -4,9 +4,9 @@ const User = require("../../models/User");
 const bcrypt = require('bcryptjs');
 const { default: axios } = require("axios");
 const ForgotPasswordOtp = require('../../models/forgotPasswordOtp');
-const { isEmailValid, createOtp, sendJson } = require("../../utils/utils");
+const { isEmailValid, createOtp, sendJson, MAIL_SERVER_ADDRESS } = require("../../utils/utils");
 
-const url = 'http://localhost:9999/sendForgotPasswordOtpMail'// 'https://mail.freightdok.io/sendForgotPasswordOtpMail'
+const url = 'http://localhost:9999/sendForgotPasswordOtpMail'// 
 // send OTP to mail server
 router.post('/', async (req, res) => {
     const { email } = req.body;
@@ -30,7 +30,7 @@ router.post('/', async (req, res) => {
         }
     })
 
-    axios.post(url, { email, otp })
+    axios.post(MAIL_SERVER_ADDRESS + '/sendForgotPasswordOtpMail', { email, otp })
         .then(async resp => {
             console.log('OTP sent to', email);
             await forgotPassword.save();
@@ -54,7 +54,7 @@ router.put('/', (req, res) => {
 
     ForgotPasswordOtp.findOneAndDelete({ otp }, (err, result) => {
         if (err || !result) {
-            res.status(400).json({ message: 'OTP Invalid' });
+            res.status(400).json({ message: 'Invalid OTP' });
             return console.log(err)
         } else {
             const salt = bcrypt.genSaltSync(10);
