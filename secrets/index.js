@@ -36,7 +36,7 @@ const FetchSecret = async (orgId) => {
         return { success: true, data, isValid }
     } catch (error) {
         console.log('Error : While fetching secrets :', error.message);
-        return { succes: false, data: {} };
+        return { success: false, data: {} };
     }
 }
 

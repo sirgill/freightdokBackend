@@ -47,7 +47,7 @@ router.post(
       //See if user exists
       let user = await User.findOne({ email });
       if (!user) {
-        return res.status(400).json({ errors: [{ msg: "Invalid Credentials" }], success: false, message: 'User not found' });
+        return res.status(400).json({ errors: [{ msg: "Invalid Credentials" }], success: false, message: 'Couldn’t find your freightdok Account' });
       }
 
       if (superadmin) {
@@ -58,7 +58,7 @@ router.post(
       const isMatch = await bcrypt.compare(password, user.password);
 
       if (!isMatch) {
-        return res.status(400).json({ errors: [{ msg: "Invalid Creds." }], message: 'Password incorrect', success: false });
+        return res.status(400).json({ errors: [{ msg: "Invalid Creds." }], message: 'Wrong password. Try again or click Forgot password to reset it.', success: false });
       }
 
       //Return jsonwebtoken
