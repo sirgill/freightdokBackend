@@ -117,9 +117,9 @@ router.post('/validateOtp', (req, res) => {
             res.status(400).json({ success: true, message: 'Something went wrong', dbError: err.message });
         } else {
             if (!result) {
-                return res.send(200)
+                return res.status(404).json(sendJson(false, 'User not found'))
             } else if (result?.isPendingApproval === true) {
-                res.status(400).json({ success: false, message: email + ' is not approved yet' })
+                res.status(400).json({ success: false, message: email + ' is pending for approval' })
             }
             else if (result?.userRegistrationStatus === 'Complete') {
                 res.status(400).json({ success: false, message: 'User is already registered' })
