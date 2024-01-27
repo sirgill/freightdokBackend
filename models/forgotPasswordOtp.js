@@ -17,11 +17,9 @@ const forgotPasswordOtpSchema = new mongoose.Schema({
     }
 },
     {
-        collection: 'forgotPasswordOtp'
-    },
-    {
+        collection: 'forgotPasswordOtp',
         timestamps: true
-    }
+    },
 )
 
 module.exports = mongoose.model('forgotPasswordOtp', forgotPasswordOtpSchema);
