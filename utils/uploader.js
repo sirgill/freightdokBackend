@@ -2,7 +2,7 @@ const axios = require('axios').default;
 const fs = require("fs")
 const FormData = require('form-data');
 const path = require("path")
-const uploadServerURL = 'http://3.6.22.119:7777/upload';
+const uploadServerURL = 'http://18.220.161.91:7777/upload';
 
 const uploader = async (files, id, filePath = '../documents/load') => {
   // ==============================================
