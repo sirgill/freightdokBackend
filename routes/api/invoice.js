@@ -4,7 +4,7 @@ const auth = require("../../middleware/auth");
 const Invoice = require("../../models/Invoice");
 const Load = require("../../models/Load");
 
-router.post('/moveBackToMyLoads', auth, (req, res) => {
+router.post('/moveToMyLoads', auth, (req, res) => {
     const { id, status } = req.body;
     Load.findOneAndUpdate({ _id: id }, { status, invoice_created: false }, null, (err, result) => {
         if (err) {
