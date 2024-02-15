@@ -54,7 +54,6 @@ router.post(
       check("user", "Please select a driver first").not().isEmpty(),
       check("firstName", "First Name is required").not().isEmpty(),
       check("lastName", "Last Name is required").not().isEmpty(),
-      check("phoneNumber", "Phone number is required").not().isEmpty(),
     ],
   ],
   async (req, res) => {
