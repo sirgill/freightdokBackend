@@ -8,6 +8,7 @@ const auth = require("../../middleware/auth");
 const Driver = require("../../models/Driver");
 const Load = require("../../models/Load");
 const User = require("../../models/User");
+const { ROLE_NAMES } = require("../../middleware/permissions");
 
 // Array of user's who can create, read, update and delete
 const allowed_members_set_1 = config.get("roles").filter(member => member !== 'user');
@@ -21,23 +22,31 @@ const admin_check = async (_id, members) => (members.indexOf((await User.findOne
 //@access Private
 router.get("/me", auth, async (req, res) => {
   try {
-    const _id = req.user.id;
-    console.log(req.user)
+    const { id: _id, orgId } = req.user;
     const query = {};
     const isAdmin = req.user.role === "admin";
+    const ownerOperators = await User.find({ orgId, role: ROLE_NAMES.ownerOperator }).select('firstName lastName _id role name');
+
     if (isAdmin)
       query['orgId'] = req.user.orgId;
     else
       query['user'] = _id;
 
-    const drivers = await Driver.find(query).populate("user", ["name"]);
+    const drivers = await Driver.find(query).populate("user", ["name", "role", "_id"]);
     const q_query = query
     q_query['role'] = 'driver'
     const users = await User.find(q_query).select('email');
     if (!drivers) {
       return res.status(400).json({ msg: "There are no drivers for this user" });
     }
-    return res.json({ drivers, users });
+    const assignees = []
+    if (drivers && drivers.length) {
+      assignees.push(...drivers)
+    }
+    if (ownerOperators && ownerOperators.length) {
+      assignees.push(...ownerOperators);
+    }
+    return res.json({ drivers, users, assignees });
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server Error");

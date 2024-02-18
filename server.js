@@ -10,7 +10,6 @@ const { newtrulWebhook } = require('./routes/api/newtrulWebhooks');
 const { catchErrors } = require('./utils/utils');
 const { schedulers } = require('./utils/schedulers');
 const chBidsHook = require('./webhooks/chBids');
-const { FetchSecret, createSecretCred } = require('./secrets');
 
 
 const app = express();

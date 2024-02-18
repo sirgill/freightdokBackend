@@ -3,7 +3,7 @@ const auth = require("../../middleware/auth");
 const router = express.Router();
 const OwnerOp = require('../../models/OwnerOperator');
 const User = require("../../models/User");
-const { authAdmin } = require("../../middleware/permissions");
+const { authAdmin, ROLE_NAMES } = require("../../middleware/permissions");
 
 router.post('/', auth, authAdmin, (req, resp) => {
     try {
@@ -44,7 +44,7 @@ router.get('/', auth, (req, res) => {
     const { orgId, role } = req.user
     try {
         if (['superAdmin', 'admin'].includes(role)) {
-            User.find({ orgId, role: 'ownerOperator' }, (err, result) => {
+            User.find({ orgId, role: ROLE_NAMES.ownerOperator }, (err, result) => {
                 if (err) {
                     return res.status(400).json({ totalCount: 0, data: [], _dbError: err.message });
                 }

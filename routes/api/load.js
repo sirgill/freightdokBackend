@@ -139,7 +139,7 @@ const getLoads = async ({ page = 1, limit = 4, search = '', module = '' }, _id, 
   // }
 
   const load = await Load.find(query)
-    .populate("assignedTo")
+    .populate(["assignedTo", 'user'])
     .limit(limit * 1)
     .sort({ createdAt: -1 })
     .skip((page - 1) * limit)

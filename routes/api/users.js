@@ -55,7 +55,7 @@ router.get("/", auth, async (req, res) => {
   }
 });
 
-router.get('/getUserByRole/:role', auth, (req, res) => {
+router.get('/getUsersByRole/:role', auth, (req, res) => {
   const { role } = req.params;
   User.find({ role }, (err, data) => {
     if (err) {

@@ -3,6 +3,7 @@ const ROLE_NAMES = {
     dispatch: "dispatch",
     admin: "admin",
     ownerOperator: "ownerOperator",
+    support: 'support'
 };
 
 const authAdmin = (req, res, next) => {
