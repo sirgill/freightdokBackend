@@ -25,18 +25,21 @@ const rolePermission = new mongoose.Schema({
         drivers: { ...canAccess },
         invoices: { ...canAccess },
         facilities: { ...canAccess },
-        ownerOperators: { ...canAccess },
+        ownerOperator: { ...canAccess },
         carrierProfile: { ...canAccess },
         openBoard: { ...canAccess },
         history: { ...canAccess },
     },
-    isDefault: Boolean,
+    isDefault: {
+        type: Boolean,
+        default: true
+    },
 }, {
     timestamps: true
 });
 
 rolePermission.pre('validate', function (next) {
-    this.name = this.name.charAt(0).toUpperCase() + this.name.slice(1).toLowerCase()
+    this.roleName = this.roleName.charAt(0).toUpperCase() + this.roleName.slice(1).toLowerCase()
     next();
 });
 
