@@ -8,6 +8,8 @@ const auth = require("../../middleware/auth");
 const User = require("../../models/User");
 const OrganizationUsers = require("../../models/OrganizationUsers");
 const Organizations = require("../../models/Organizations");
+const RolePermission = require("../../models/RolePermission");
+const DefaultRolePermissions = require("../../models/DefaultRolePermissions");
 
 // Array of user's who can create, read, update and delete
 const allowed_members_set_1 = config.get("roles").filter(member => member !== 'user');
@@ -40,7 +42,7 @@ router.get("/", auth, async (req, res) => {
       .limit(limit * 1)
       .sort('-date')
       .skip((page - 1) * limit)
-      .select('name email role firstName lastName')
+      .select('name email role firstName lastName rolePermissionId')
       .exec();
 
     res.json({
@@ -84,7 +86,7 @@ router.post(
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    const { name, email, password, role, firstName, lastName } = req.body;
+    const { name, email, password, role, firstName, lastName, rolePermissionId } = req.body;
     const isAdmin = await admin_check(req.user.id, allowed_members_set_1);
     if (!isAdmin && !name) {
       return res.status(400).json({ errors: [{ msg: "Name is required" }] });
@@ -99,20 +101,23 @@ router.post(
       }
       const newUser = { email, password };
       if (!isAdmin)
-        newUser['name'] = name || `${firstName} ${lastName || ''}`;
+        newUser['name'] = name || `${firstName} ${lastName || ''}`.trim();
       else {
         newUser['role'] = role;
         newUser['created_by'] = req.user.id;
         newUser['orgId'] = req.user.orgId;
-
+        newUser.rolePermissionId = rolePermissionId;
       }
-      user = new User(newUser);
       //Encrypt passoword
       const salt = await bcrypt.genSalt(10);
-      user.password = await bcrypt.hash(password, salt);
+      newUser.password = await bcrypt.hash(password, salt);
+      user = new User(newUser);
       const user_details = await user.save();
 
       if (user_details) {
+        const defaultPermissions = await DefaultRolePermissions.findOne({ _id: rolePermissionId });
+        const rolePermission = new RolePermission({ userId: user_details._id, roleName: role, permissions: defaultPermissions.permissions });
+        await rolePermission.save();
         const org_details = await Organizations.findOne({ adminId: req.user.id });
         console.log("org_details", org_details._id, org_details.name)
         /**
@@ -147,10 +152,10 @@ router.post(
           }
         );
       } else {
-        return res.send({ email, role, _id: user.id });
+        return res.status(201).send({ email, role, _id: user.id, message: 'User created successfully' });
       }
     } catch (err) {
-      res.status(500).send("Server error");
+      res.status(500).send({ message: "Server error", _dbError: err.message });
     }
   }
 );
@@ -198,7 +203,7 @@ router.put('/changePassword', auth, async (req, res) => {
 //@desc Update user
 //@access Public
 router.put("/:_id", auth, async (req, res) => {
-  const allowedFields = ["email", "password", "role"]; // Field allowed to update
+  const allowedFields = ["email", "password", "role", "rolePermissionId"]; // Field allowed to update
   const { _id } = req.params;
   try {
     const isAdmin = await admin_check(req.user.id, allowed_members_set_1);
@@ -228,10 +233,20 @@ router.put("/:_id", auth, async (req, res) => {
     for (let key of Object.keys(toUpdate))
       user[key] = toUpdate[key]
     user['last_updated_by'] = req.user.id;
+
+    const hasRolePermissionIdUpdated = user.rolePermissionId !== toUpdate.rolePermissionId;
+
+    if (hasRolePermissionIdUpdated) {
+      user.rolePermissionId = toUpdate.rolePermissionId;
+    }
+
     await user.save();
     const newUser = user.toObject();
-    delete newUser.password;
-    res.json(newUser);
+    if (hasRolePermissionIdUpdated && newUser) {
+      const defaultPermissions = await DefaultRolePermissions.findOne({ _id: toUpdate.rolePermissionId });
+      await RolePermission.updateOne({ userId: newUser._id }, { permissions: defaultPermissions.permissions, roleName: toUpdate.role });
+    }
+    res.status(200).json(newUser);
   } catch (e) {
     res.status(500).send(e.message);
   }
@@ -250,6 +265,8 @@ router.delete("/:_id", auth, async (req, res) => {
     if (user.role === 'admin')
       throw new Error('Cannot delete the user');
     await user.remove();
+    const rolePermissionOfUserId = await RolePermission.findOne({ userId: user._id });
+    rolePermissionOfUserId && rolePermissionOfUserId.remove();
     return res.status(200).send('User deleted.');
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });

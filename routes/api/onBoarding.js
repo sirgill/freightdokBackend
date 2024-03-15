@@ -8,6 +8,8 @@ const bcrypt = require('bcryptjs')
 const User = require("../../models/User");
 const Organizations = require("../../models/Organizations");
 const { createSecretCred } = require("../../secrets");
+const DefaultRolePermissions = require("../../models/DefaultRolePermissions");
+const RolePermission = require("../../models/RolePermission");
 
 
 router.get('/', auth, (req, res) => {
@@ -157,13 +159,15 @@ router.post('/register', (req, res) => {
                         } else {
                             const user = new User({ email, password: hash, role: 'admin', dot, phone: phoneNumber, orgId: null, name, firstName, lastName });
 
-
-
                             user.save(async (err, userDetails) => {
                                 if (err) {
                                     console.log(err.message);
                                     return res.status(400).json({ success: false, message: 'User not created', dbError: err.message })
                                 }
+                                /**Save the new user in RolePermission table by getting admin Role for DefaultRolePermission */
+                                const admin = await DefaultRolePermissions.findOne({ roleName: { $in: ['admin', 'Admin'] } }),
+                                    rolePermission = new RolePermission({ roleName: admin.roleName, permissions: admin.permissions, userId: userDetails._id });
+                                await rolePermission.save();
                                 //creating new organization for new onboarded customer Creating New ORG for the Approved Admin .
                                 const company_data = await Onboarding.findOne({ _id: _id });
                                 const org = await Organizations.create({ adminId: userDetails._id, otherOrgMetaData: company_data?.fmcsaDetails, name: company_data?.fmcsaDetails?.carrier?.legalName });

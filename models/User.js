@@ -32,7 +32,9 @@ const UserSchema = new mongoose.Schema({
   role: {
     type: String,
     default: 'user',
-    enum: roles
+  },
+  rolePermissionId: {
+    type: mongoose.ObjectId,
   },
   created_by: {
     type: mongoose.Schema.Types.ObjectId,

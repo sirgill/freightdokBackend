@@ -9,7 +9,8 @@ const DASHBOARDS = [
     { "id": "loads", "label": "Loads" },
     { "id": "openBoard", "label": "Open Board" },
     { "id": "ownerOperator", "label": "Owner Operator" },
-    { "id": "users", "label": "Users" }
+    { "id": "users", "label": "Users" },
+    { "id": "facilities", "label": "Facilities" },
 ]
 
 const DEFAULT_PERMISSIONS = { add: false, edit: false, delete: false, view: false };

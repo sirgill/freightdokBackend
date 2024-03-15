@@ -5,7 +5,7 @@ const DefaultRolePermission = require('../../models/DefaultRolePermissions');
 const mongoose = require("mongoose");
 const DefaultRolePermissions = require("../../models/DefaultRolePermissions");
 const RolePermission = require("../../models/RolePermission");
-const { getRolePermissionsByRoleName, DASHBOARDS, DEFAULT_PERMISSIONS } = require("../../utils/dashboardUtils");
+const { getRolePermissionsByRoleName } = require("../../utils/dashboardUtils");
 
 router.get('/rolesAndPermissions', auth, async (req, res) => {
     try {
@@ -13,6 +13,35 @@ router.get('/rolesAndPermissions', auth, async (req, res) => {
         res.status(200).json({ permissions: rolePermissions, success: true })
     } catch (error) {
         res.status(400).json({ data: [], message: error.message })
+    }
+})
+
+router.post('/assignDefaultPermissions', auth, (req, res) => {
+    try {
+        const { userId, permissionId } = req.body;
+        const isValidPermissionId = mongoose.Types.ObjectId.isValid(permissionId);
+
+        if (!isValidPermissionId) {
+            return res.status(400).json({ message: 'Invalid permission ID' });
+        }
+
+        DefaultRolePermission.findById({ _id: permissionId }, async (err, result) => {
+            if (err) {
+                return res.status(404).json({ message: 'Role not found. Please check id', _dbError: err.message });
+            }
+            const { permissions, roleName } = result;
+            const isExistUser = await User.findById({ _id: userId });
+            if (isExistUser) {
+                const rolePermission = new RolePermission({ userId, permissions, roleName, isDefault: true });
+                await rolePermission.save();
+                res.status(201).json({ message: "User assigned with default permissions" });
+            } else {
+                res.status(403).json({ message: 'User not found', success: false })
+            }
+        });
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).json({ message: error.message, success: false });
     }
 })
 
@@ -29,6 +58,9 @@ router.get('/getRoleAndPermissionById', auth, async (req, res) => {
 
 router.post('/', auth, (req, res) => {
     const { roleName, permissions } = req.body;
+    if (!roleName || !permissions) {
+        return res.status(400).json({ message: 'Role name or permissions not defined', success: false })
+    }
     try {
         const defaultRolePermission = new DefaultRolePermissions({ roleName, permissions });
         defaultRolePermission.save()

@@ -48,14 +48,17 @@ app.use('/api/ownerOperator', require('./routes/api/ownerOperator'));
 app.use('/api/carrierProfile', require('./routes/api/fmcsa'));
 app.use('/api/chRobinson', require('./routes/api/chRobinson'));
 app.use('/api/newtrulLoad', require('./routes/api/newTrulLoad'));
-app.use('/api/register', require('./routes/api/register'))
+/**
+ * Route deprecated.
+ */
+// app.use('/api/register', require('./routes/api/register'))
 app.use('/privacy-policy', (req, res) => {
     res.sendFile(path.join(__dirname, '/documents/privacyPolicy', 'Privacy_Policy.html'))
 });
 app.use('/api/searchLocationAutocomplete', require('./routes/api/searchLocationAutocomplete'))
 app.use('/api/onboarding', require('./routes/api/onBoarding'));
 app.use('/api/forgotPassword', require('./routes/api/forgotPasswordOtp'));
-app.use('/api/roles', require('./routes/api/defaultRolePermission'));
+app.use('/api/roles', require('./routes/api/DefaultRolePermission'));
 app.use('/api/rolePermission', require('./routes/api/rolePermission'));
 
 // ---------------------------------------------------------------------------
