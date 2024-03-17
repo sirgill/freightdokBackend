@@ -6,9 +6,13 @@ const Warehouse = require('../../models/Warehouse');
 const getDistanceinKM = require("../../utils/haversine");
 
 router.get('/', auth, (req, res) => {
+    const { page = 1, limit = 5 } = req.query;
     Warehouse.find()
-        .then(warehouses => {
-            res.status(200).send({ totalCount: warehouses.length, warehouses })
+        .limit(+limit)
+        .skip((+page - 1) * limit)
+        .then(async warehouses => {
+            const totalCount = await Warehouse.countDocuments({})
+            res.status(200).send({ totalCount, warehouses })
         })
         .catch(err => {
             console.log(err)

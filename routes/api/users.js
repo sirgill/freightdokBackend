@@ -50,7 +50,7 @@ router.get("/", auth, async (req, res) => {
       limit,
       total: count,
       totalPages: Math.ceil(count / limit),
-      currentPage: page - 1
+      currentPage: +page
     });
   } catch (e) {
     res.status(500).send({ success: false, message: e.message });
