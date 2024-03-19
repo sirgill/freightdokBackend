@@ -265,8 +265,6 @@ router.delete("/:_id", auth, async (req, res) => {
     if (user.role === 'admin')
       throw new Error('Cannot delete the user');
     await user.remove();
-    const rolePermissionOfUserId = await RolePermission.findOne({ userId: user._id });
-    rolePermissionOfUserId && rolePermissionOfUserId.remove();
     return res.status(200).send('User deleted.');
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });
