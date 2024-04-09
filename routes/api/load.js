@@ -118,11 +118,11 @@ const getLoads = async ({ page = 1, limit = 4, search = '', module = '' }, _id, 
       // query['status'] = { $ne :'Delivered' };
     }
   }
-  const isAdmin = reqUser.role === "admin"
+  const isAdmin = reqUser.role.toLowerCase() === "admin"
   if (isAdmin)
     query['orgId'] = reqUser.orgId;
   else
-    query['userId'] = _id;
+    query['user'] = _id;
 
 
   const allLoadsQuery = Object.assign({}, query);
