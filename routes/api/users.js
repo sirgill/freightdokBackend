@@ -8,6 +8,8 @@ const auth = require("../../middleware/auth");
 const User = require("../../models/User");
 const OrganizationUsers = require("../../models/OrganizationUsers");
 const Organizations = require("../../models/Organizations");
+const RolePermission = require("../../models/RolePermission");
+const DefaultRolePermissions = require("../../models/DefaultRolePermissions");
 
 // Array of user's who can create, read, update and delete
 const allowed_members_set_1 = config.get("roles").filter(member => member !== 'user');
@@ -21,9 +23,6 @@ const admin_check = async (_id, members) => (members.indexOf((await User.findOne
 router.get("/", auth, async (req, res) => {
   const { page = 1, limit = 5 } = req.query;
   try {
-    const isAdmin = await admin_check(req.user.id, allowed_members_set_1);
-    if (!isAdmin)
-      throw new Error('Forbidden', 403);
 
     // const OrganizationDetails = await Organizations.findOne({ $or: [{ userId: req.user.id }, { adminId: req.user.id }] });
 
@@ -40,7 +39,7 @@ router.get("/", auth, async (req, res) => {
       .limit(limit * 1)
       .sort('-date')
       .skip((page - 1) * limit)
-      .select('name email role firstName lastName')
+      .select('name email role firstName lastName rolePermissionId')
       .exec();
 
     res.json({
@@ -48,7 +47,7 @@ router.get("/", auth, async (req, res) => {
       limit,
       total: count,
       totalPages: Math.ceil(count / limit),
-      currentPage: page - 1
+      currentPage: +page
     });
   } catch (e) {
     res.status(500).send({ success: false, message: e.message });
@@ -84,11 +83,8 @@ router.post(
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    const { name, email, password, role, firstName, lastName } = req.body;
+    const { name = '', email, password, role, firstName, lastName = null, rolePermissionId } = req.body;
     const isAdmin = await admin_check(req.user.id, allowed_members_set_1);
-    if (!isAdmin && !name) {
-      return res.status(400).json({ errors: [{ msg: "Name is required" }] });
-    }
     try {
       //See if user exists
       let user = await User.findOne({ email });
@@ -97,35 +93,42 @@ router.post(
           .status(400)
           .json({ errors: [{ msg: "user already exists" }], success: false, message: 'User already exists' });
       }
-      const newUser = { email, password };
-      if (!isAdmin)
-        newUser['name'] = name || `${firstName} ${lastName || ''}`;
-      else {
-        newUser['role'] = role;
-        newUser['created_by'] = req.user.id;
-        newUser['orgId'] = req.user.orgId;
-
-      }
-      user = new User(newUser);
+      const newUser = { email, password, firstName, lastName };
+      // if (!isAdmin)
+      // else {
+      // }
+      newUser['name'] = name || `${firstName} ${lastName || ''}`.trim();
+      newUser['role'] = role;
+      newUser['created_by'] = req.user.id;
+      newUser['orgId'] = req.user.orgId;
+      newUser.rolePermissionId = rolePermissionId;
       //Encrypt passoword
       const salt = await bcrypt.genSalt(10);
-      user.password = await bcrypt.hash(password, salt);
+      newUser.password = await bcrypt.hash(password, salt);
+      user = new User(newUser);
       const user_details = await user.save();
 
       if (user_details) {
+        /* Get the Default Role for user being created and save in RolePermission table */
+        const defaultPermissions = await DefaultRolePermissions.findOne({ _id: rolePermissionId });
+        const rolePermission = new RolePermission({ userId: user_details._id, roleName: role, permissions: defaultPermissions.permissions });
+        await rolePermission.save();
+
+        /* Get organization details of this user's Admin from Organizations table and create user id mapping with orgId and AdminId in OrganizationsUsers table */
         const org_details = await Organizations.findOne({ adminId: req.user.id });
-        console.log("org_details", org_details._id, org_details.name)
+        console.log("org_details", org_details?._id, org_details?.name)
         /**
          * Check if org_details exists otherwise delete the user from user table and return response
          */
         if (org_details)
           await OrganizationUsers.create({ adminId: req.user.id, userId: user_details._id, orgId: org_details._id })
         else {
-          return User.findByIdAndDelete(user_details._id, (err, result) => {
+          return User.findByIdAndDelete(user_details._id, async (err, result) => {
             if (err) {
-              return res.status(500).json({ message: 'No Organization found. Contact Super Admin' })
+              return res.status(500).json({ message: 'No Organization found. Contact your Admin' })
             } else {
-              return res.status(404).json({ message: 'No Organization found for you in records. User not saved.' })
+              await RolePermission.findOneAndDelete({ userId: user_details._id });
+              return res.status(403).json({ message: 'Forbidden: No Organization found for you in records. User not saved.' })
             }
           });
         }
@@ -147,10 +150,10 @@ router.post(
           }
         );
       } else {
-        return res.send({ email, role, _id: user.id });
+        return res.status(201).send({ email, role, _id: user.id, message: 'User created successfully' });
       }
     } catch (err) {
-      res.status(500).send("Server error");
+      res.status(500).send({ message: "Server error", _dbError: err.message });
     }
   }
 );
@@ -198,12 +201,9 @@ router.put('/changePassword', auth, async (req, res) => {
 //@desc Update user
 //@access Public
 router.put("/:_id", auth, async (req, res) => {
-  const allowedFields = ["email", "password", "role"]; // Field allowed to update
+  const allowedFields = ["email", "password", "role", "rolePermissionId", 'firstName', 'lastName']; // Field allowed to update
   const { _id } = req.params;
   try {
-    const isAdmin = await admin_check(req.user.id, allowed_members_set_1);
-    if (!isAdmin)
-      throw new Error('Forbidden', 403);
     const toUpdate = req.body;
     for (let field of Object.keys(toUpdate)) {
       if (allowedFields.indexOf(field) < 0)
@@ -228,10 +228,20 @@ router.put("/:_id", auth, async (req, res) => {
     for (let key of Object.keys(toUpdate))
       user[key] = toUpdate[key]
     user['last_updated_by'] = req.user.id;
+
+    const hasRolePermissionIdUpdated = user.rolePermissionId !== toUpdate.rolePermissionId;
+
+    if (hasRolePermissionIdUpdated) {
+      user.rolePermissionId = toUpdate.rolePermissionId;
+    }
+
     await user.save();
     const newUser = user.toObject();
-    delete newUser.password;
-    res.json(newUser);
+    if (hasRolePermissionIdUpdated && newUser) {
+      const defaultPermissions = await DefaultRolePermissions.findOne({ _id: toUpdate.rolePermissionId });
+      await RolePermission.updateOne({ userId: newUser._id }, { permissions: defaultPermissions.permissions, roleName: toUpdate.role });
+    }
+    res.status(200).json(newUser);
   } catch (e) {
     res.status(500).send(e.message);
   }
@@ -244,8 +254,6 @@ router.delete("/:_id", auth, async (req, res) => {
   const { _id } = req.params;
   try {
     const isAdmin = await admin_check(req.user.id, allowed_members_set_1);
-    if (!isAdmin)
-      throw new Error('Forbidden', 403);
     const user = await User.findOne({ _id });
     if (user.role === 'admin')
       throw new Error('Cannot delete the user');
