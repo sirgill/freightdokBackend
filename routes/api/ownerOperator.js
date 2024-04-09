@@ -1,9 +1,9 @@
 const express = require("express");
 const auth = require("../../middleware/auth");
 const router = express.Router();
-const OwnerOp = require('../../models/OwnerOperator');
 const User = require("../../models/User");
 const { authAdmin, ROLE_NAMES } = require("../../middleware/permissions");
+const RolePermission = require("../../models/RolePermission");
 
 router.post('/', auth, authAdmin, (req, resp) => {
     try {
@@ -41,18 +41,21 @@ router.post('/', auth, authAdmin, (req, resp) => {
 })
 
 router.get('/', auth, (req, res) => {
-    const { orgId, role } = req.user
+    const { orgId } = req.user;
+    const { page = 1, limit = 5 } = req.query,
+        query = { orgId, role: { $in: [ROLE_NAMES.ownerOperator, 'Owner Operator'] } };
     try {
-        if (['superAdmin', 'admin'].includes(role)) {
-            User.find({ orgId, role: ROLE_NAMES.ownerOperator }, (err, result) => {
-                if (err) {
-                    return res.status(400).json({ totalCount: 0, data: [], _dbError: err.message });
-                }
-                res.status(200).json({ totalCount: result.length, data: result });
+        User.find(query)
+            .limit(+limit)
+            .skip((+page - 1) * limit)
+            .then(async (result) => {
+                const totalCount = await User.countDocuments(query);
+                return res.status(200).json({ totalCount, data: result });
             })
-        } else {
-            res.status(401).json({ success: false, message: 'Not Authorized' });
-        }
+            .catch(err => {
+                return res.status(400).json({ totalCount: 0, data: [], _dbError: err.message });
+            })
+
     } catch (error) {
         console.log(error.message)
     }
@@ -73,7 +76,7 @@ router.delete('/:id', auth, authAdmin, async (req, res) => {
     if (!id) {
         return res.status(404).json({ message: 'ID does not exists' })
     }
-    User.findByIdAndDelete(id)
+    User.findOneAndDelete({ _id: id })
         .then(result => {
             if (result)
                 res.status(200).json({ message: 'Deleted successfully!' });

@@ -5,7 +5,9 @@ const jwt = require("jsonwebtoken");
 const { check, validationResult } = require("express-validator/check");
 const config = require("config");
 const bcrypt = require("bcryptjs");
-const roles = config.get("roles");
+const roles = config.get("roles"),
+  RolePermission = require('../../models/RolePermission.js'),
+  DefaultRolePermission = require('../../models/DefaultRolePermissions.js');
 
 const User = require("../../models/User");
 
@@ -14,10 +16,12 @@ const User = require("../../models/User");
 //@access Public
 router.get("/", auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("-password");
+    const user = await User.findById(req.user.id).select("-password"),
+      defaultRoles = await DefaultRolePermission.find({ roleName: { $nin: ['Super Admin', 'super admin'] } }).select('_id roleName');
     res.json({
       user,
-      roles
+      roles,
+      allRoles: defaultRoles
     });
   } catch (err) {
     console.error(err.message);
@@ -47,7 +51,7 @@ router.post(
       //See if user exists
       let user = await User.findOne({ email });
       if (!user) {
-        return res.status(400).json({ errors: [{ msg: "Invalid Credentials" }], success: false, message: 'Couldn’t find your freightdok Account' });
+        return res.status(400).json({ errors: [{ msg: "Invalid Credentials" }], success: false, message: `Couldn't find your freightdok Account` });
       }
 
       if (superadmin) {
@@ -61,6 +65,9 @@ router.post(
         return res.status(400).json({ errors: [{ msg: "Invalid Creds." }], message: 'Wrong password. Try again or click Forgot password to reset it.', success: false });
       }
 
+      const permissions = await RolePermission.findOne({ userId: user.id }).select('permissions _id roleName'),
+        defaultRoles = await DefaultRolePermission.find({ roleName: { $nin: ['Super Admin', 'super admin'] } }).select('_id roleName');
+
       //Return jsonwebtoken
       const payload = {
         user: {
@@ -68,8 +75,9 @@ router.post(
           email,
           role: user.role,
           name: user.name,
-          orgId: user.orgId
-
+          orgId: user.orgId,
+          firstName: user.firstName,
+          lastName: user.lastName
         }
       };
 
@@ -79,7 +87,7 @@ router.post(
         { expiresIn: 360000 },
         (err, token) => {
           if (err) throw err;
-          res.json({ token, roles });
+          res.json({ token, supportsNewPermission: !!permissions, roles, userPermissions: permissions, allRoles: defaultRoles });
         }
       );
     } catch (err) {
