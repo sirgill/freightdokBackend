@@ -10,6 +10,8 @@ const { newtrulWebhook } = require('./routes/api/newtrulWebhooks');
 const { catchErrors } = require('./utils/utils');
 const { schedulers } = require('./utils/schedulers');
 const chBidsHook = require('./webhooks/chBids');
+const corsAnywhere = require('cors-anywhere');
+
 
 
 const app = express();
@@ -73,6 +75,14 @@ app.get('/', (req, res) => res.send('API Running'));
 const PORT = process.env.PORT || 5000;
 
 
+const host = '0.0.0.0';
+const corsPORT = 3432;
+
+corsAnywhere.createServer({
+    originWhitelist: [], // Allow all origins
+}).listen(corsPORT, host, () => {
+    console.log(`CORS Anywhere server is running on ${host}:${corsPORT}`);
+});
 
 app.listen(PORT, () => {
     catchErrors();
