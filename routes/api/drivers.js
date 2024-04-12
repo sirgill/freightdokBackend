@@ -24,8 +24,8 @@ router.get("/me", auth, async (req, res) => {
   try {
     const { id: _id, orgId } = req.user;
     const query = {};
-    const isAdmin = req.user.role === "admin";
-    const ownerOperators = await User.find({ orgId, role: ROLE_NAMES.ownerOperator }).select('firstName lastName _id role name');
+    const isAdmin = req.user.role.toLowerCase() === "admin";
+    const user_drivers = await User.find({ orgId, role: ROLE_NAMES.driver }).select('firstName lastName _id role name');
 
     if (isAdmin)
       query['orgId'] = req.user.orgId;
@@ -33,9 +33,10 @@ router.get("/me", auth, async (req, res) => {
       query['user'] = _id;
 
     const drivers = await Driver.find(query).populate("user", ["name", "role", "_id"]);
-    const q_query = query
-    q_query['role'] = 'driver'
-    const users = await User.find(q_query).select('email');
+    const q_query = query;
+    const roleRegex = new RegExp('^driver$', 'i');
+    q_query['role'] = { $regex: roleRegex }
+    const users = await User.find(q_query).select('email _id');
     if (!drivers) {
       return res.status(400).json({ msg: "There are no drivers for this user" });
     }
@@ -43,8 +44,8 @@ router.get("/me", auth, async (req, res) => {
     if (drivers && drivers.length) {
       assignees.push(...drivers)
     }
-    if (ownerOperators && ownerOperators.length) {
-      assignees.push(...ownerOperators);
+    if (user_drivers && user_drivers.length) {
+      assignees.push(...user_drivers);
     }
     return res.json({ drivers, users, assignees });
   } catch (err) {
