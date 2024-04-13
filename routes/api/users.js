@@ -228,7 +228,15 @@ router.put("/:_id", auth, async (req, res) => {
     for (let key of Object.keys(toUpdate))
       user[key] = toUpdate[key]
     user['last_updated_by'] = req.user.id;
+    let name = '';
+    if (toUpdate.firstName) {
+      name = toUpdate.firstName;
+    }
 
+    if (toUpdate.lastName) {
+      name += ' ' + toUpdate.lastName;
+    }
+    user.name = name;
     const hasRolePermissionIdUpdated = user.rolePermissionId !== toUpdate.rolePermissionId;
 
     if (hasRolePermissionIdUpdated) {
