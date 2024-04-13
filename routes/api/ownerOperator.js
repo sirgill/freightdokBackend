@@ -1,30 +1,39 @@
 const express = require("express");
 const auth = require("../../middleware/auth");
 const router = express.Router();
-const OwnerOp = require('../../models/OwnerOperator');
+const User = require("../../models/User");
+const { authAdmin, ROLE_NAMES } = require("../../middleware/permissions");
+const RolePermission = require("../../models/RolePermission");
 
-router.post('/', auth, (req, resp) => {
+router.post('/', auth, authAdmin, (req, resp) => {
     try {
-        const {body = {}} = req;
-    const { _id = null } = body;
-    const ownerOp = new OwnerOp(req.body);
-    if(_id){
-        delete body._id;
-        OwnerOp.updateOne({ _id }, { ...body })
-        .then(response => {
-            if (response.ok) {
-                console.log(_id + ' Owner Operator Updated');
-                return resp.status(200).json({ message: 'Updated Sucessfully', success: true })
-            }
-        })
-        .catch(err => console.log(err.message));
-    } else ownerOp.save()
-            .then(res => {
-                resp.status(200).json({ success: true, data: res, message: 'Owner Operator created Successfully' });
+        const { body = {} } = req;
+        const { _id = null } = body;
+        console.log('Updating Owner Operator', _id, body.firstName);
+        const { firstName, phone } = body;
+        /**
+         * Server side validations
+         */
+        if (!firstName) {
+            return resp.status(422).json({ success: false, message: 'First Name is mandatory' })
+        } else if (!phone) {
+            return resp.status(422).json({ success: false, message: 'Phone Number is mandatory' })
+        }
+        /**
+         * Update if _id exists in client request
+         */
+        if (_id) {
+            //Update user
+            delete body._id;
+            User.findByIdAndUpdate(_id, body, (err, result) => {
+                if (err) {
+                    return resp.status(500).json({ message: 'Server Error while saving', _dbError: err.message });
+                }
+                resp.status(201).json({ message: 'Updated successfully' });
             })
-            .catch(err => {
-                resp.status(400).json({ success: false, data: {}, message: err?.message || '' });
-            })
+        } else {
+            resp.status(400).json({ success: false, data: 'This user does not exists' });
+        }
     } catch (error) {
         console.log('error while post "/"', error.message)
         resp.status(500).json({ success: false, data: {} });
@@ -32,45 +41,53 @@ router.post('/', auth, (req, resp) => {
 })
 
 router.get('/', auth, (req, res) => {
+    const { orgId } = req.user;
+    const { page = 1, limit = 5 } = req.query,
+        query = { orgId, role: { $in: [ROLE_NAMES.ownerOperator, 'Owner Operator'] } };
     try {
-        OwnerOp.find()
-        .then(data => {
-            res.status(200).json({ success: true, data })
-        })
-        .catch((err) => {
-            console.log(err.message);
-            res.status(400).json({ totalCount: 0, data: {}, error: err.message });
-          });
+        User.find(query)
+            .limit(+limit)
+            .skip((+page - 1) * limit)
+            .then(async (result) => {
+                const totalCount = await User.countDocuments(query);
+                return res.status(200).json({ totalCount, data: result });
+            })
+            .catch(err => {
+                return res.status(400).json({ totalCount: 0, data: [], _dbError: err.message });
+            })
+
     } catch (error) {
         console.log(error.message)
     }
 })
 
-router.get('/:id', auth, (req, res) => {
+router.get('/:id', auth, authAdmin, (req, res) => {
     const { params: { id } } = req;
-    OwnerOp.findById(id)
-        .then(result => {
-            if (result) {
-                res.status(200).json({ data: result, message: 'Fetched successfully.' })
-            }
-            else res.status(400).send({ data: {}, message: 'Not found.' })
-        })
-        .catch(err => {
-            console.log(err);
-        })
+    User.findById(id, (err, result) => {
+        if (err) {
+            return res.status(400).json({ success: false, message: 'This user does not exists', _dbError: err.message });
+        }
+        res.status(200).json({ data: result });
+    })
 })
 
-router.delete('/:id', auth, (req, res) => {
+router.delete('/:id', auth, authAdmin, async (req, res) => {
     const { params: { id = '' } = {} } = req;
     if (!id) {
         return res.status(404).json({ message: 'ID does not exists' })
     }
-    OwnerOp.findByIdAndDelete(id)
+    User.findOneAndDelete({ _id: id })
         .then(result => {
             if (result)
                 res.status(200).json({ message: 'Deleted successfully!' });
+            else {
+                res.status(400).json({ message: 'Delete unsuccessful. Please try later.' })
+            }
         })
-        .catch(err => console.log(err))
+        .catch(err => {
+            console.log(err)
+            res.status(500).json({ _dbError: err.message })
+        })
 })
 
 module.exports = router;

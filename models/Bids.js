@@ -2,9 +2,17 @@ const mongoose = require("mongoose");
 
 const BidsSchema = new mongoose.Schema(
   {
+    orgId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "organizations",
+    },
     vendorId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "vendors",
+    },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
     },
     ownerOpId: {
       type: String,

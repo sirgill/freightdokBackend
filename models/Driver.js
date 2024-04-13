@@ -3,11 +3,14 @@ const Schema = mongoose.Schema;
 const LoadSchema = require("mongoose").model("load").schema
 
 const DriverSchema = new mongoose.Schema({
+  orgId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "organizations",
+  },
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'user'
   },
-
   firstName: {
     type: String,
     required: true
@@ -30,7 +33,7 @@ const DriverSchema = new mongoose.Schema({
   //   type: Number
   // },
 
-},{
+}, {
   timestamps: true
 });
 

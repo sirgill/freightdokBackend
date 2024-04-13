@@ -52,12 +52,15 @@ const isPhoneValid = (num) => {
     return re.test(String(num).toLowerCase());
 }
 
-const sendJson = (success, message) => {
+const sendJson = (success, message, ...rest) => {
     return {
         success,
-        message
+        message,
+        ...(rest || {})
     }
 }
+
+const MAIL_SERVER_ADDRESS = 'https://mail.freightdok.io';
 
 module.exports = {
     sendJson,
@@ -65,5 +68,6 @@ module.exports = {
     catchErrors,
     isEmailValid,
     isPhoneValid,
-    getLoadsStruct
+    getLoadsStruct,
+    MAIL_SERVER_ADDRESS,
 }

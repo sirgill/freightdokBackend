@@ -8,6 +8,7 @@ const auth = require("../../middleware/auth");
 const Driver = require("../../models/Driver");
 const Load = require("../../models/Load");
 const User = require("../../models/User");
+const { ROLE_NAMES } = require("../../middleware/permissions");
 
 // Array of user's who can create, read, update and delete
 const allowed_members_set_1 = config.get("roles").filter(member => member !== 'user');
@@ -21,17 +22,32 @@ const admin_check = async (_id, members) => (members.indexOf((await User.findOne
 //@access Private
 router.get("/me", auth, async (req, res) => {
   try {
-    const _id = req.user.id;
+    const { id: _id, orgId } = req.user;
     const query = {};
-    const isAdmin = await admin_check(req.user.id, allowed_members_set_1);
-    if (!isAdmin)
+    const isAdmin = req.user.role.toLowerCase() === "admin";
+    const user_drivers = await User.find({ orgId, role: ROLE_NAMES.driver }).select('firstName lastName _id role name');
+
+    if (isAdmin)
+      query['orgId'] = req.user.orgId;
+    else
       query['user'] = _id;
-    const drivers = await Driver.find(query).populate("user", ["name"]);
-    const users = await User.find({ role: 'driver' }).select('email');
+
+    const drivers = await Driver.find(query).populate("user", ["name", "role", "_id"]);
+    const q_query = query;
+    const roleRegex = new RegExp('^driver$', 'i');
+    q_query['role'] = { $regex: roleRegex }
+    const users = await User.find(q_query).select('email _id');
     if (!drivers) {
       return res.status(400).json({ msg: "There are no drivers for this user" });
     }
-    return res.json({ drivers, users });
+    const assignees = []
+    if (drivers && drivers.length) {
+      assignees.push(...drivers)
+    }
+    if (user_drivers && user_drivers.length) {
+      assignees.push(...user_drivers);
+    }
+    return res.json({ drivers, users, assignees });
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server Error");
@@ -48,7 +64,6 @@ router.post(
       check("user", "Please select a driver first").not().isEmpty(),
       check("firstName", "First Name is required").not().isEmpty(),
       check("lastName", "Last Name is required").not().isEmpty(),
-      check("phoneNumber", "Phone number is required").not().isEmpty(),
     ],
   ],
   async (req, res) => {
@@ -73,13 +88,16 @@ router.post(
 
       const driver = await Driver.findOne({ user });
       if (driver)
-        throw new Error('Driver with same credentials already exists');
+        res.status(403).json({ message: 'Err : Driver with same credentials already exists' });
+
 
       await User.findOneAndUpdate({ _id: user }, {
-        name: firstName + ' ' + lastName
+        name: firstName + ' ' + lastName,
+        firstName,
+        lastName
       });
 
-      const status = await Load.update({ _id: { $in: newLoads } }, { $set: { user } }, { multi: true });
+      const status = await Load.updateOne({ _id: { $in: newLoads } }, { $set: { user } }, { multi: true });
       console.log('Status: ', status);
 
       const newDriver = await Driver.create({
@@ -88,9 +106,10 @@ router.post(
         lastName,
         phoneNumber,
         loads,
+        orgId: req.user.orgId
       });
 
-      res.json({ success: true, message: 'Driver Created' });
+      res.json({ success: true, message: 'Driver Created', data: newDriver });
     } catch (err) {
       console.error(err.message);
       res.status(500).send("Server Error");

@@ -10,7 +10,8 @@ const { newtrulWebhook } = require('./routes/api/newtrulWebhooks');
 const { catchErrors } = require('./utils/utils');
 const { schedulers } = require('./utils/schedulers');
 const chBidsHook = require('./webhooks/chBids');
-const { FetchSecret, createSecretCred } = require('./secrets');
+const corsAnywhere = require('cors-anywhere');
+
 
 
 const app = express();
@@ -34,6 +35,7 @@ app.use(express.static(path.join(__dirname, './documents')));
 app.use(express.static(path.join(__dirname, './documents/privacyPolicy')));
 app.use(morgan('dev'))
 
+app.use('/api/organizations', require('./routes/api/organizations'));
 app.use('/api/users', require('./routes/api/users'));
 app.use('/api/auth', require('./routes/api/auth'));
 app.use('/api/load', require('./routes/api/load'));
@@ -48,12 +50,18 @@ app.use('/api/ownerOperator', require('./routes/api/ownerOperator'));
 app.use('/api/carrierProfile', require('./routes/api/fmcsa'));
 app.use('/api/chRobinson', require('./routes/api/chRobinson'));
 app.use('/api/newtrulLoad', require('./routes/api/newTrulLoad'));
-app.use('/api/register', require('./routes/api/register'))
+/**
+ * Route deprecated.
+ */
+// app.use('/api/register', require('./routes/api/register'))
 app.use('/privacy-policy', (req, res) => {
     res.sendFile(path.join(__dirname, '/documents/privacyPolicy', 'Privacy_Policy.html'))
 });
 app.use('/api/searchLocationAutocomplete', require('./routes/api/searchLocationAutocomplete'))
 app.use('/api/onboarding', require('./routes/api/onBoarding'));
+app.use('/api/forgotPassword', require('./routes/api/forgotPasswordOtp'));
+app.use('/api/roles', require('./routes/api/defaultRolePermission'));
+app.use('/api/rolePermission', require('./routes/api/rolePermission'));
 
 // ---------------------------------------------------------------------------
 //$NEWBOOKBIDWEBHOOK-$7867*/
@@ -84,6 +92,14 @@ app.get('/', (req, res) => res.send('API Running'));
 const PORT = process.env.PORT || 5000;
 
 
+const host = '0.0.0.0';
+const corsPORT = 3432;
+
+corsAnywhere.createServer({
+    originWhitelist: [], // Allow all origins
+}).listen(corsPORT, host, () => {
+    console.log(`CORS Anywhere server is running on ${host}:${corsPORT}`);
+});
 
 app.listen(PORT, () => {
     catchErrors();

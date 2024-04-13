@@ -3,7 +3,8 @@ const router = express.Router();
 const auth = require("../../middleware/auth");
 const Bid = require("../../models/Bids");
 const path = require("path");
-const { default: axios } = require("axios");
+const { FetchSecret } = require("../../secrets");
+const { ROLE_NAMES } = require("../../middleware/permissions");
 
 router.get("/", auth, (req, res) => {
   const { bidReq } = req.query;
@@ -33,7 +34,46 @@ router.get("/", auth, (req, res) => {
     });
 });
 
-router.get("/biddings", (req, res) => {
+router.get("/biddings", auth, async (req, res) => {
+  let match_query;
+  const { role, orgId, id } = req.user || {};
+  const { page = 1, limit = 5 } = req.query;
+
+  if (!role.includes(ROLE_NAMES.superAdmin)) {
+    const result = await FetchSecret(orgId);
+    if (!result.isValid) {
+      return res.status(403).json({ success: false, data: [], message: 'Please enter Broker credentials in the Carrier Profile to see all the Loads available' })
+    }
+  }
+
+  if (role === "admin" || role === 'superAdmin')
+    match_query = { orgId };
+  else
+    match_query = { userId: id }
+
+  const query = { ...match_query, isActive: { $in: [true, undefined] } }
+  Bid.find(query)
+    .sort({ createdAt: -1 })
+    .skip((page - 1 || 0) * limit)
+    .limit(+limit)
+    .then((bid) => {
+      Bid.countDocuments(query).exec((count_error, count) => {
+        if (count_error) {
+          return res.json(count_error);
+        }
+        return res.status(200).json({ data: bid, totalCount: count, page, limit });
+      });
+    })
+    .catch((err) => {
+      console.log(err.message);
+      res.status(400).json({ totalCount: 0, data: {}, error: err.message });
+    });
+});
+
+/**
+ * {IMPORTANT} - This route is To be used strictly in babylonion server
+ */
+router.get("/allBiddingsForBabylonion", (req, res) => {
   Bid.find({ isActive: { $in: [true, undefined] } })
     .then((bid) => {
       res.status(200).json({ totalCount: bid.length, data: bid });
@@ -44,15 +84,18 @@ router.get("/biddings", (req, res) => {
     });
 });
 
+
 router.post("/newTrulBidding/:loadNumber", auth, (req, res) => {
   const { params: { loadNumber = '' } = {} } = req;
   const body = req.body;
   const dbPayload = {
+    orgId: req.user.orgId,
     status: false,
     loadNumber,
     bidAmount: body.offer_amount,
     vendorName: body.vendorName,
     ownerOpId: req.user.id,
+    userId: req.user.id,
     offerStatus: false,
     loadDetail: body.loadDetail
   }
@@ -60,7 +103,7 @@ router.post("/newTrulBidding/:loadNumber", auth, (req, res) => {
 })
 
 router.post('/saveChOfferRequestId', auth, (req, res) => {
-  const dbPayload = { ...req.body, status: false, ownerOpId: req.user.id };
+  const dbPayload = { ...req.body, status: false, ownerOpId: req.user.id, userId: req.user.id, orgId: req.user.orgId };
   return saveBid(dbPayload, res)
 })
 

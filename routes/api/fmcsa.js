@@ -7,6 +7,8 @@ const path = require("path");
 const uploader = require("../../utils/uploader");
 const User = require("../../models/User");
 const { FetchSecret, createSecretCred } = require("../../secrets");
+const { authAdmin, ROLE_NAMES } = require("../../middleware/permissions");
+const { sendJson } = require("../../utils/utils");
 
 router.get('/', auth, async (req, res) => {
     try {
@@ -35,6 +37,20 @@ router.get('/', auth, async (req, res) => {
 });
 
 
+/**
+ * ENDPOINT to be used only for go-lang
+ */
+router.get("/golang-secret-manager", async (req, res) => {
+    const { orgId } = req.query;
+    const ans = await FetchSecret(orgId)
+    if (ans.success) {
+        console.log('db data', ans.data)
+        // const _data = [data[keys.indexOf('chRobinson')], data[keys.indexOf('newtrul')]]
+        res.status(200).json({ success: true, data: ans.data });
+    } else {
+        res.status(200).json({ data: [] });
+    }
+})
 
 const getFMCSACarrierProfileProps = (content) => {
     if (!content) {
@@ -99,43 +115,89 @@ router.post('/', auth, upload.any(), async (req, res) => {
 
 // **************************($78686- Secrets Manager Code)*****************************
 
+const generateTabularFromSecrets = (awsData = {}) => {
+    const arr = []
+    for (let key in awsData) {
+        if (typeof awsData[key] === 'object') {
+            arr.push({ integrationName: key, ...awsData[key] })
+        }
+        if (key.toLowerCase() === "chrobinson" && typeof awsData[key] === 'string') {
+            arr.push({ integrationName: key, clientId: "", clientSecret: "", code: "", email: "", mc: "" })
+        }
+        if (key === "newtrul" && typeof awsData[key] === 'string') {
+            arr.push({ integrationName: key, code: "", email: "", mc: "" })
+        }
+
+    }
+    return arr;
+}
+
+const defaultCreds = [
+    {
+        "integrationName": "newtrul",
+        "mc": "",
+        "email": "",
+        "code": ""
+    },
+    {
+        "integrationName": "chRobinson",
+        "mc": "",
+        "email": "",
+        "clientId": "",
+        "clientSecret": ""
+    }
+]
+
 router.get("/secret-manager", auth, async (req, res) => {
     const { orgId } = req.query;
     const role = req.user.role.toLowerCase()
     if (role === "admin" || role === "superadmin") {
-        const ans = await FetchSecret("ORGID_" + orgId)
-        const keys = Object.keys(ans.data);
-        const values = Object.values(ans.data);
-        const data = keys.map((key, i) => {
-            return {
-                integrationName: key,
-                code: values[i],
-                email: values[keys.indexOf('email')] || null,
-                mc: values[keys.indexOf('mc')] || null
-            }
-        })
-        const _data = [data[keys.indexOf('chRobinson')], data[keys.indexOf('newtrul')]]
-        res.status(200).json({ success: true, data: _data, _dbData: ans.data });
+        const ans = await FetchSecret(orgId)
+        if (ans.success) {
+            const tableData = generateTabularFromSecrets(ans.data);
+            // const _data = [data[keys.indexOf('chRobinson')], data[keys.indexOf('newtrul')]]
+            res.status(200).json({ success: true, data: tableData.length ? tableData : defaultCreds, _dbData: ans.data });
+        } else {
+            res.status(200).json({ data: [] });
+        }
     }
     else {
-        res.status(401).json({ success: false, message: 'User Not Authorized!' })
+        res.status(403).json({ success: false, message: 'Forbidden!' })
     }
 })
 
 
-router.post("/secret-manager", auth, async (req, res) => {
+router.post("/secret-manager", auth, authAdmin, async (req, res) => {
     const { update = false } = req.query
-    const orgId = req.user.id // This userid is used as orgId
+    const orgId = req.user.orgId // This userid is used as orgId
     const secretObject = req.body;
     const role = req.user.role.toLowerCase();
-    let ans;
-    if (role === "admin" || role === "superadmin") {
-        ans = await createSecretCred(update === 'true', "ORGID_" + orgId, secretObject);
-        res.status(200).json(ans);
+    const allSecretKeys = await FetchSecret(orgId),
+        { data, success } = allSecretKeys;
+    if (success) {
+        /**
+         * Override the object got from UI with old data.
+         */
+        const newData = { ...data, ...secretObject };
+        let ans;
+        if (role === ROLE_NAMES.admin || role === ROLE_NAMES.superAdmin) {
+            /**
+             * Only admins and super admins can save or update carrier profiles data
+             */
+            ans = await createSecretCred(update === 'true', orgId, newData);
+            res.status(200).json(ans);
+        }
+        else {
+            /**
+             * Unauthorized Error.
+             */
+            res.status(401).json({ success: false, message: 'User Not Authorized!' })
+        }
+    } else {
+        // Error response
+        res.status(404).json(sendJson(false, 'Error Saving. Please try later', data))
     }
-    else {
-        res.status(401).json({ success: false, message: 'User Not Authorized!' })
-    }
+
 })
 
 
@@ -160,7 +222,6 @@ router.get("/:id", auth, (req, res) => {
     }
 
 })
-
 
 
 module.exports = router;
