@@ -65,6 +65,16 @@ router.get('/getUsersByRole/:role', auth, (req, res) => {
   })
 })
 
+router.get('/:id', auth, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const data = await User.findById(id).select('name email role firstName lastName rolePermissionId')
+    res.status(200).json({ success: true, data })
+  } catch (error) {
+    res.status(404).json({ success: false, data: {}, message: 'No User found' })
+  }
+})
 //@route Post api/users
 //@desc Register user route
 //@access Public
@@ -91,7 +101,7 @@ router.post(
       if (user) {
         return res
           .status(400)
-          .json({ errors: [{ msg: "user already exists" }], success: false, message: 'User already exists' });
+          .json({ errors: [{ msg: "user already exists" }], success: false, message: 'Email already exists' });
       }
       const newUser = { email, password, firstName, lastName };
       // if (!isAdmin)
