@@ -32,7 +32,7 @@ router.get("/me", auth, async (req, res) => {
     else
       query['user'] = _id;
 
-    const drivers = await Driver.find(query).populate("user", ["name", "role", "_id"]);
+    const drivers = await Driver.find(query);
     const q_query = query;
     const roleRegex = new RegExp('^driver$', 'i');
     q_query['role'] = { $regex: roleRegex }
@@ -58,14 +58,7 @@ router.get("/me", auth, async (req, res) => {
 //@access Private
 router.post(
   "/",
-  [
-    auth,
-    [
-      check("user", "Please select a driver first").not().isEmpty(),
-      check("firstName", "First Name is required").not().isEmpty(),
-      check("lastName", "Last Name is required").not().isEmpty(),
-    ],
-  ],
+  auth,
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -73,7 +66,7 @@ router.post(
     }
 
     try {
-      const { user, firstName, lastName, phoneNumber, loads, _id } = req.body;
+      const { user, firstName, lastName = null, phoneNumber, loads, _id } = req.body;
 
       if (_id) {
         const updater = await Driver.updateOne({ _id }, { firstName, lastName, phoneNumber });
@@ -112,7 +105,7 @@ router.post(
       res.json({ success: true, message: 'Driver Created', data: newDriver });
     } catch (err) {
       console.error(err.message);
-      res.status(500).send("Server Error");
+      res.status(500).json({ message: 'Server Error', _dbError: err.message });
     }
   }
 );
