@@ -32,7 +32,7 @@ router.get("/me", auth, async (req, res) => {
     else
       query['user'] = _id;
 
-    const drivers = await Driver.find(query);
+    const drivers = await Driver.find(query).populate('user', 'firstName lastName email _id');
     const q_query = query;
     const roleRegex = new RegExp('^driver$', 'i');
     q_query['role'] = { $regex: roleRegex }
@@ -66,7 +66,7 @@ router.post(
     }
 
     try {
-      const { user, firstName, lastName = null, phoneNumber, loads, _id } = req.body;
+      const { user, firstName, lastName = null, phoneNumber, loads = [], _id } = req.body;
 
       if (_id) {
         const updater = await Driver.updateOne({ _id }, { firstName, lastName, phoneNumber });
@@ -84,11 +84,12 @@ router.post(
         res.status(403).json({ message: 'Err : Driver with same credentials already exists' });
 
 
-      await User.findOneAndUpdate({ _id: user }, {
-        name: firstName + ' ' + lastName,
-        firstName,
-        lastName
-      });
+      /**COMMENTED BELOW CODE: Why do we need to Update user with Driver name */
+      // await User.findOneAndUpdate({ _id: user }, {
+      //   name: firstName + ' ' + lastName,
+      //   firstName,
+      //   lastName
+      // });
 
       const status = await Load.updateOne({ _id: { $in: newLoads } }, { $set: { user } }, { multi: true });
       console.log('Status: ', status);
