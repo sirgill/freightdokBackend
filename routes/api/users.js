@@ -244,7 +244,7 @@ router.put("/:_id", auth, async (req, res) => {
     }
 
     if (toUpdate.lastName) {
-      name += ' ' + toUpdate.lastName;
+      name += name + ' ' + toUpdate.lastName;
     }
     user.name = name;
     const hasRolePermissionIdUpdated = user.rolePermissionId !== toUpdate.rolePermissionId;
@@ -259,7 +259,7 @@ router.put("/:_id", auth, async (req, res) => {
       const defaultPermissions = await DefaultRolePermissions.findOne({ _id: toUpdate.rolePermissionId });
       await RolePermission.updateOne({ userId: newUser._id }, { permissions: defaultPermissions.permissions, roleName: toUpdate.role });
     }
-    res.status(200).json(newUser);
+    res.status(200).json({ success: true, message: 'User updated', data: { _id: newUser._id } });
   } catch (e) {
     res.status(500).send(e.message);
   }
