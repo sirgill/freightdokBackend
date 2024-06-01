@@ -2,17 +2,45 @@ const { default: axios } = require("axios");
 const express = require("express");
 const router = express.Router();
 const auth = require("../../middleware/auth");
-const Warehouse = require('../../models/Warehouse');
+const Facilities = require('../../models/Warehouse');
 const getDistanceinKM = require("../../utils/haversine");
 
 router.get('/', auth, (req, res) => {
-    const { page = 1, limit = 5 } = req.query;
-    Warehouse.find()
+    const { page = 1, limit = 5, search = '' } = req.query;
+    const query = {
+        $or: [
+            {
+                name: {
+                    $regex: search,
+                    '$options': 'i'
+                }
+            },
+            {
+                address: {
+                    $regex: search,
+                    '$options': 'i'
+                }
+            },
+            {
+                state: {
+                    $regex: search,
+                    '$options': 'i'
+                }
+            },
+            {
+                city: {
+                    $regex: search,
+                    '$options': 'i'
+                }
+            },
+        ]
+    }
+    Facilities.find(query)
         .limit(+limit)
         .skip((+page - 1) * limit)
         .then(async warehouses => {
-            const totalCount = await Warehouse.countDocuments({})
-            res.status(200).send({ totalCount, warehouses })
+            const totalCount = await Facilities.countDocuments(query)
+            res.status(200).send({ totalCount, facilities: warehouses })
         })
         .catch(err => {
             console.log(err)
@@ -23,10 +51,10 @@ router.get('/', auth, (req, res) => {
 router.post('/', auth, (req, res) => {
     const { body = {} } = req;
     const { _id = null } = body;
-    const warehouse = new Warehouse(body);
+    const warehouse = new Facilities(body);
     if (_id) {
         delete body._id
-        Warehouse.updateOne({ _id }, { ...body })
+        Facilities.updateOne({ _id }, { ...body })
             .then(response => {
                 if (response.ok) {
                     console.log(_id + ' Updated');
@@ -68,7 +96,7 @@ router.post('/distance', (req, res) => {
     const { _id, lat, lng } = req.body;
     console.log(req.body)
     if (_id) {
-        Warehouse.findById(_id)
+        Facilities.findById(_id)
             .then(result => {
                 const { latitude = '', longitude = '' } = result;
                 console.log(latitude, longitude)
@@ -89,7 +117,7 @@ router.delete('/:id', auth, (req, res) => {
     if (!id) {
         return res.status(404).json({ message: 'ID does not exists' })
     }
-    Warehouse.findByIdAndDelete(id)
+    Facilities.findByIdAndDelete(id)
         .then(result => {
             if (result)
                 res.status(200).json({ message: 'Deleted successfully!' });
@@ -101,7 +129,7 @@ router.get('/search', auth, (req, res) => {
     const { text = '' } = req.query;
     try {
         if (text) {
-            Warehouse.find(
+            Facilities.find(
                 {
                     $or: [
                         {
@@ -146,7 +174,7 @@ router.get('/search', auth, (req, res) => {
 
 router.get('/:id', auth, (req, res) => {
     const { params: { id } } = req;
-    Warehouse.findById(id)
+    Facilities.findById(id)
         .then(result => {
             if (result) {
                 res.status(200).json({ data: result, message: 'Fetched successfully.' })

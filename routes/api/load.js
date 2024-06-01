@@ -70,7 +70,7 @@ router.get("/invoice_loads", auth, async (req, res) => {
     //   ];
     // }
     const total = await Load.countDocuments(query);
-    const loads = await Load.find(query)
+    const loads = await Load.find(query).populate('user', ['name', 'firstName', 'lastName'])
       // .select("loadNumber brokerage rate rateConfirmation proofDelivery")
       .limit(limit * 1)
       .sort({ createdAt: -1 })
@@ -118,7 +118,11 @@ const getLoads = async ({ page = 1, limit = 4, search = '', module = '' }, _id, 
       // query['status'] = { $ne :'Delivered' };
     }
   }
-  const isAdmin = reqUser.role.toLowerCase() === "admin"
+
+  /**
+   * Since all the below roles share the loads among themselves for visibility, we have to show all the loads based on orgId to them
+   */
+  const isAdmin = ['admin', 'dispatch', 'support', 'invoice'].includes(reqUser.role.toLowerCase());
   if (isAdmin)
     query['orgId'] = reqUser.orgId;
   else
@@ -189,6 +193,12 @@ router.post("/", [auth, [check("loadNumber", "Load number is required").not().is
     const user = await User.findById(req.user.id).select("-password");
 
     const { brokerage, loadNumber, rate, pickUp, dropOff } = req.body;
+
+    const loadExists = await Load.find({ loadNumber });
+    if (loadExists) {
+      return res.status(403).json({ message: "This Load Number already exists" })
+    }
+
     const load = await Load.create({
       user: req.user.id,
       userId: req.user.id,

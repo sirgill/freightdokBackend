@@ -25,14 +25,14 @@ router.get("/me", auth, async (req, res) => {
     const { id: _id, orgId } = req.user;
     const query = {};
     const isAdmin = req.user.role.toLowerCase() === "admin";
-    const user_drivers = await User.find({ orgId, role: ROLE_NAMES.driver }).select('firstName lastName _id role name');
+    const user_drivers_ownerOp = await User.find({ orgId, role: { $in: [ROLE_NAMES.driver, ROLE_NAMES.ownerOperator, 'Owner Operator'] } }).select('firstName lastName _id role name');
 
     if (isAdmin)
       query['orgId'] = req.user.orgId;
     else
       query['user'] = _id;
 
-    const drivers = await Driver.find(query).populate("user", ["name", "role", "_id"]);
+    const drivers = await Driver.find(query).populate('user', 'firstName lastName email _id');
     const q_query = query;
     const roleRegex = new RegExp('^driver$', 'i');
     q_query['role'] = { $regex: roleRegex }
@@ -44,8 +44,8 @@ router.get("/me", auth, async (req, res) => {
     if (drivers && drivers.length) {
       assignees.push(...drivers)
     }
-    if (user_drivers && user_drivers.length) {
-      assignees.push(...user_drivers);
+    if (user_drivers_ownerOp && user_drivers_ownerOp.length) {
+      assignees.push(...user_drivers_ownerOp);
     }
     return res.json({ drivers, users, assignees });
   } catch (err) {
@@ -58,14 +58,7 @@ router.get("/me", auth, async (req, res) => {
 //@access Private
 router.post(
   "/",
-  [
-    auth,
-    [
-      check("user", "Please select a driver first").not().isEmpty(),
-      check("firstName", "First Name is required").not().isEmpty(),
-      check("lastName", "Last Name is required").not().isEmpty(),
-    ],
-  ],
+  auth,
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -73,7 +66,7 @@ router.post(
     }
 
     try {
-      const { user, firstName, lastName, phoneNumber, loads, _id } = req.body;
+      const { user, firstName, lastName = null, phoneNumber, loads = [], _id } = req.body;
 
       if (_id) {
         const updater = await Driver.updateOne({ _id }, { firstName, lastName, phoneNumber });
@@ -91,11 +84,12 @@ router.post(
         res.status(403).json({ message: 'Err : Driver with same credentials already exists' });
 
 
-      await User.findOneAndUpdate({ _id: user }, {
-        name: firstName + ' ' + lastName,
-        firstName,
-        lastName
-      });
+      /**COMMENTED BELOW CODE: Why do we need to Update user with Driver name */
+      // await User.findOneAndUpdate({ _id: user }, {
+      //   name: firstName + ' ' + lastName,
+      //   firstName,
+      //   lastName
+      // });
 
       const status = await Load.updateOne({ _id: { $in: newLoads } }, { $set: { user } }, { multi: true });
       console.log('Status: ', status);
@@ -112,7 +106,7 @@ router.post(
       res.json({ success: true, message: 'Driver Created', data: newDriver });
     } catch (err) {
       console.error(err.message);
-      res.status(500).send("Server Error");
+      res.status(500).json({ message: 'Server Error', _dbError: err.message });
     }
   }
 );
