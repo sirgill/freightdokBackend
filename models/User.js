@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { roles } = require('../config/default.json');
+const RolePermission = require('./RolePermission');
 const Schema = mongoose.Schema;
 
 const UserSchema = new mongoose.Schema({
@@ -35,6 +35,7 @@ const UserSchema = new mongoose.Schema({
   },
   rolePermissionId: {
     type: mongoose.ObjectId,
+    ref: 'defaultRolePermission'
   },
   created_by: {
     type: mongoose.Schema.Types.ObjectId,
@@ -55,5 +56,35 @@ UserSchema.statics.checkUserExistsByEmail = async function (email, callback) {
     })
   })
 }
+
+UserSchema.post('findOneAndDelete', async function (doc, next) {
+  if (!doc) {
+    return next();
+  }
+
+  const userId = doc._id;
+
+  try {
+    await RolePermission.deleteMany({ userId });
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+
+UserSchema.post('remove', async function (doc, next) {
+  if (!doc) {
+    return next(); // No user deleted, nothing to do
+  }
+
+  const userId = doc._id;
+
+  try {
+    await RolePermission.deleteMany({ userId });
+    next();
+  } catch (error) {
+    next(error);
+  }
+})
 
 module.exports = User = mongoose.model('user', UserSchema);
