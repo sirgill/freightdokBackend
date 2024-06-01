@@ -118,7 +118,11 @@ const getLoads = async ({ page = 1, limit = 4, search = '', module = '' }, _id, 
       // query['status'] = { $ne :'Delivered' };
     }
   }
-  const isAdmin = reqUser.role.toLowerCase() === "admin"
+
+  /**
+   * Since all the below roles share the loads among themselves for visibility, we have to show all the loads based on orgId to them
+   */
+  const isAdmin = ['admin', 'dispatch', 'support', 'invoice'].includes(reqUser.role.toLowerCase());
   if (isAdmin)
     query['orgId'] = reqUser.orgId;
   else

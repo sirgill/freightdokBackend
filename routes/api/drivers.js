@@ -25,7 +25,7 @@ router.get("/me", auth, async (req, res) => {
     const { id: _id, orgId } = req.user;
     const query = {};
     const isAdmin = req.user.role.toLowerCase() === "admin";
-    const user_drivers = await User.find({ orgId, role: ROLE_NAMES.driver }).select('firstName lastName _id role name');
+    const user_drivers_ownerOp = await User.find({ orgId, role: { $in: [ROLE_NAMES.driver, ROLE_NAMES.ownerOperator, 'Owner Operator'] } }).select('firstName lastName _id role name');
 
     if (isAdmin)
       query['orgId'] = req.user.orgId;
@@ -44,8 +44,8 @@ router.get("/me", auth, async (req, res) => {
     if (drivers && drivers.length) {
       assignees.push(...drivers)
     }
-    if (user_drivers && user_drivers.length) {
-      assignees.push(...user_drivers);
+    if (user_drivers_ownerOp && user_drivers_ownerOp.length) {
+      assignees.push(...user_drivers_ownerOp);
     }
     return res.json({ drivers, users, assignees });
   } catch (err) {
