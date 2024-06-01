@@ -70,7 +70,7 @@ router.get("/invoice_loads", auth, async (req, res) => {
     //   ];
     // }
     const total = await Load.countDocuments(query);
-    const loads = await Load.find(query)
+    const loads = await Load.find(query).populate('user', ['name', 'firstName', 'lastName'])
       // .select("loadNumber brokerage rate rateConfirmation proofDelivery")
       .limit(limit * 1)
       .sort({ createdAt: -1 })
