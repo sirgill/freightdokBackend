@@ -6,12 +6,40 @@ const Facilities = require('../../models/Warehouse');
 const getDistanceinKM = require("../../utils/haversine");
 
 router.get('/', auth, (req, res) => {
-    const { page = 1, limit = 5 } = req.query;
-    Facilities.find()
+    const { page = 1, limit = 5, search = '' } = req.query;
+    const query = {
+        $or: [
+            {
+                name: {
+                    $regex: search,
+                    '$options': 'i'
+                }
+            },
+            {
+                address: {
+                    $regex: search,
+                    '$options': 'i'
+                }
+            },
+            {
+                state: {
+                    $regex: search,
+                    '$options': 'i'
+                }
+            },
+            {
+                city: {
+                    $regex: search,
+                    '$options': 'i'
+                }
+            },
+        ]
+    }
+    Facilities.find(query)
         .limit(+limit)
         .skip((+page - 1) * limit)
         .then(async warehouses => {
-            const totalCount = await Facilities.countDocuments({})
+            const totalCount = await Facilities.countDocuments(query)
             res.status(200).send({ totalCount, facilities: warehouses })
         })
         .catch(err => {
