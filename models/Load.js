@@ -125,6 +125,7 @@ const LoadSchema = new mongoose.Schema({
   loadNumber: {
     type: String,
     required: true,
+    unique: true,
   },
 
   trailorNumber: {

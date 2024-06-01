@@ -189,6 +189,12 @@ router.post("/", [auth, [check("loadNumber", "Load number is required").not().is
     const user = await User.findById(req.user.id).select("-password");
 
     const { brokerage, loadNumber, rate, pickUp, dropOff } = req.body;
+
+    const loadExists = await Load.find({ loadNumber });
+    if (loadExists) {
+      return res.status(403).json({ message: "This Load Number already exists" })
+    }
+
     const load = await Load.create({
       user: req.user.id,
       userId: req.user.id,
