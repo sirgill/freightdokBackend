@@ -2,7 +2,6 @@ const express = require("express");
 const path = require("path");
 const mime = require("mime");
 const config = require("config");
-const fs = require("fs");
 const router = express.Router();
 const { check, validationResult } = require("express-validator/check");
 const auth = require("../../middleware/auth");
@@ -92,7 +91,7 @@ const getLoads = async ({ page = 1, limit = 4, search = '', module = '' }, _id, 
   const query = {};
   if (!search) {
     if (!module || (module && module === 'loads')) {
-      query['status'] = { $nin: ['Delivered', 'delivered'] };
+      query['status'] = { $nin: ['Delivered', 'delivered', 'archived'] };
     } else if (module && module === 'history') {
       query['invoice_created'] = true;
     }
@@ -195,7 +194,7 @@ router.post("/", [auth, [check("loadNumber", "Load number is required").not().is
     const { brokerage, loadNumber, rate, pickUp, dropOff } = req.body;
 
     const loadExists = await Load.find({ loadNumber });
-    if (loadExists) {
+    if (Array.isArray(loadExists) && loadExists.length) {
       return res.status(403).json({ message: "This Load Number already exists" })
     }
 

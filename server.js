@@ -50,6 +50,7 @@ app.use('/api/ownerOperator', require('./routes/api/ownerOperator'));
 app.use('/api/carrierProfile', require('./routes/api/fmcsa'));
 app.use('/api/chRobinson', require('./routes/api/chRobinson'));
 app.use('/api/newtrulLoad', require('./routes/api/newTrulLoad'));
+app.use('/api/loadHistory', require('./routes/api/loadHistory'));
 /**
  * Route deprecated.
  */
