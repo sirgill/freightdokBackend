@@ -37,4 +37,15 @@ router.get('/', auth, async (req, res) => {
     }
 })
 
+router.get('/:id', auth, async (req, res) => {
+    const { id } = req.params;
+    try {
+        const load = await Load.findById(id).populate('user', 'firstName lastName email name');
+        res.status(200).json({ data: load })
+    } catch (error) {
+        console.log(error.message)
+        res.status(404).json({ _dbError: error.message })
+    }
+})
+
 module.exports = router;

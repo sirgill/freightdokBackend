@@ -164,7 +164,11 @@ const LoadSchema = new mongoose.Schema({
   },
   pickup: [PickUpSchema],
   drop: [DropOffSchema],
-  bucketFiles: [BucketFiles]
+  bucketFiles: [BucketFiles],
+  active: {
+    type: Boolean,
+    default: true
+  }
 }, {
   timestamps: true
 });
