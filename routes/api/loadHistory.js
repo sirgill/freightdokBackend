@@ -5,7 +5,7 @@ const router = express.Router();
 
 router.get('/', auth, async (req, res) => {
     try {
-        const { page = 1, limit = 100, search = '' } = req.query;
+        const { page = 1, limit = 100, search = '', sortField = 'updatedAt', sortOrder } = req.query;
         const to_search = search.toLowerCase();
         const regex = { $regex: to_search, $options: 'i' };
         const query = {
@@ -25,7 +25,7 @@ router.get('/', auth, async (req, res) => {
             .limit(+limit)
             .skip((page - 1) * limit)
             .populate('user', 'firstName lastName name email')
-            .sort({ updatedAt: -1 })
+            .sort({ [sortField]: sortOrder === 'asc' ? 1 : -1 })
             .exec();
 
         const [totalCount, loadsData] = await Promise.all([totalCountPromise, loads]);
