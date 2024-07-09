@@ -121,7 +121,10 @@ const LoadSchema = new mongoose.Schema({
   brokerage: {
     type: String,
   },
-
+  invoiceUrl: {
+    type: String,
+    default: ''
+  },
   loadNumber: {
     type: String,
     required: true,

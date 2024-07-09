@@ -13,6 +13,7 @@ const chBidsHook = require('./webhooks/chBids');
 const corsAnywhere = require('cors-anywhere');
 const BEInvoices = require('./routes/api/triumph-bank-sftp/be-invoices');
 const Invoice_v2 = require('./models/Invoice_v2');
+const auth = require('./middleware/auth');
 
 
 
@@ -61,7 +62,7 @@ app.use('/api/loadStatuses', require('./routes/api/loadStatuses'));
  */
 // app.use('/api/register', require('./routes/api/register'))
 app.use('/privacy-policy', (req, res) => {
-    res.sendFile(path.join(__dirname, '/documents/privacyPolicy', 'Privacy_Policy.html'))
+  res.sendFile(path.join(__dirname, '/documents/privacyPolicy', 'Privacy_Policy.html'))
 });
 app.use('/api/searchLocationAutocomplete', require('./routes/api/searchLocationAutocomplete'))
 app.use('/api/onboarding', require('./routes/api/onBoarding'));
@@ -76,31 +77,34 @@ app.post("/handle-ch-bids", chBidsHook);
 // ---------------------------------------------------------------------------
 
 
-app.post("/create-be-invoice-pdf",(req, res)=>{
-    BEInvoices(req.body.loadIds,res)
+app.post("/create-be-invoice-pdf", (req, res) => {
+  BEInvoices(req.body.loadIds, res)
 })
 
-app.post('/create-invoicev2', async (req, res) => {
-    const { orgId, loadNumber, notes, services } = req.body;
-    try {
-      // Create a new invoice entry
-      
-      const newInvoice = new Invoice_v2({
-        orgId,
-        loadNumber,
-        notes,
-        services
-      });
-  
-      // Save the invoice to the database
-      const savedInvoice = await newInvoice.save();
-  
-      res.status(201).json(savedInvoice);
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Error creating invoice', error });
-    }
-  });
+app.post('/api/create-invoicev2', auth, async (req, res) => {
+  const { orgId, id, orgName } = req.user;
+  const { loadNumber, notes, services } = req.body;
+  try {
+    // Create a new invoice entry
+
+    const newInvoice = new Invoice_v2({
+      orgId,
+      loadNumber,
+      notes,
+      services,
+      orgName,
+      userId: id
+    });
+
+    // Save the invoice to the database
+    const savedInvoice = await newInvoice.save();
+
+    res.status(201).json({ success: true, message: 'Saved Successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error creating invoice', error });
+  }
+});
 
 
 
@@ -114,14 +118,14 @@ const host = '0.0.0.0';
 const corsPORT = 3432;
 
 corsAnywhere.createServer({
-    originWhitelist: [], // Allow all origins
+  originWhitelist: [], // Allow all origins
 }).listen(corsPORT, host, () => {
-    console.log(`CORS Anywhere server is running on ${host}:${corsPORT}`);
+  console.log(`CORS Anywhere server is running on ${host}:${corsPORT}`);
 });
 
 app.listen(PORT, () => {
-    catchErrors();
-    schedulers();
-    console.log(`Server Started on port ${PORT}`)
+  catchErrors();
+  schedulers();
+  console.log(`Server Started on port ${PORT}`)
 });
 

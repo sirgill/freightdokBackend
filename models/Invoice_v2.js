@@ -5,18 +5,28 @@ const InvoicesV2 = new mongoose.Schema(
     orgId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "organizations",
+      required: true
     },
     loadNumber: {
       type: String,
-      unique: true,
+      required: true,
     },
     notes: { type: String, default: '' },
     services: [
-        {
-          type: mongoose.Schema.Types.Mixed,
-          default: {}
-        }
-      ]
+      {
+        type: mongoose.Schema.Types.Mixed,
+        default: {}
+      }
+    ],
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'user',
+      required: true
+    },
+    orgName: {
+      type: String,
+      required: true
+    }
   },
   {
     timestamps: true,

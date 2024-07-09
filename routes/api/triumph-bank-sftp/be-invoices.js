@@ -4,33 +4,34 @@ const Load = require('../../../models/Load');
 const { createCanvas, loadImage } = require('canvas');
 
 
-const BEInvoices=async(loadIds,res)=>{
-    console.log("LoadIds for which invoices needs to be generated : ",loadIds)
-   try{
-    await Promise.all(loadIds.map(loadId=>{
-        createInvoicePDF(loadId)
-    }))
-    res.send({success:true,message:"generated all invoices on the backend dynamically !"})
-   }
-   catch(err){
-        console.log("Error Message :",err.message)
-   }
-}
+const BEInvoices = async (loadIds, res) => {
+    console.log("LoadIds for which invoices needs to be generated : ", loadIds)
+    try {
+        await Promise.all(loadIds.map(loadId => {
+            createInvoicePDF(loadId)
+        }))
 
-
-const createInvoicePDF=async(loadID)=>{
-
-   const loadData=await Load.findOne({loadNumber:loadID})    
-
-    console.log("loadData",loadData.bucketFiles)
-
-    if(loadData.bucketFiles){
-        mergePDFs(loadData.bucketFiles,loadData)
+        res.send({ success: true, message: "generated all invoices on the backend dynamically !" })
+    }
+    catch (err) {
+        console.log("Error Message :", err.message)
     }
 }
 
 
-const addTopPortionOfThePDF = async (mergedPdf,loadData) => {
+const createInvoicePDF = async (loadID) => {
+
+    const loadData = await Load.findOne({ loadNumber: loadID })
+
+    console.log("loadData", loadData.bucketFiles)
+
+    if (loadData.bucketFiles) {
+        mergePDFs(loadData.bucketFiles, loadData)
+    }
+}
+
+
+const addTopPortionOfThePDF = async (mergedPdf, loadData) => {
     const customPdf = await PDFDocument.create();
     const page = customPdf.addPage([612, 792]);
 
@@ -133,100 +134,56 @@ const addTopPortionOfThePDF = async (mergedPdf,loadData) => {
     mergedPdf.addPage(customPage);
 }
 
-async function mergePDFs(files,loadData) {
+async function mergePDFs(files, loadData) {
     // Create a new PDF document
     const mergedPdf = await PDFDocument.create();
-    addTopPortionOfThePDF(mergedPdf,loadData)
-  
+    addTopPortionOfThePDF(mergedPdf, loadData)
+
     // Iterate over each file
     for (const file of files) {
-      if (file.fileType === 'proofDelivery') {
-        // Handle proofDelivery as an image or any type
-        const response = await fetch(file.fileLocation);
-        const arrayBuffer = await response.arrayBuffer();
-        console.log("ArrayBuffer",arrayBuffer)
-        console.log("ArrayBuffer",response.headers)
-        // Check if it's an image (you can add other type checks here)
-        if (response.headers.get('content-type').startsWith('image')) {
-            console.log("Its an Image ")
-            convertImageToPdf(arrayBuffer,mergedPdf,response.headers.get('content-type'))
+        if (file.fileType === 'proofDelivery') {
+            // Handle proofDelivery as an image or any type
+            const response = await fetch(file.fileLocation);
+            const arrayBuffer = await response.arrayBuffer();
+            console.log("ArrayBuffer", arrayBuffer)
+            console.log("ArrayBuffer", response.headers)
+            // Check if it's an image (you can add other type checks here)
+            if (response.headers.get('content-type').startsWith('image')) {
+                console.log("Its an Image ")
+                convertImageToPdf(arrayBuffer, mergedPdf, response.headers.get('content-type'))
 
+            } else {
+                // Treat non-image proofDelivery files (e.g., other types) as regular PDFs
+                const pdfDoc = await PDFDocument.load(arrayBuffer);
+
+                // Copy pages to merged PDF
+                const copiedPages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
+                copiedPages.forEach((page) => {
+                    mergedPdf.addPage(page);
+                });
+            }
         } else {
-          // Treat non-image proofDelivery files (e.g., other types) as regular PDFs
-          const pdfDoc = await PDFDocument.load(arrayBuffer);
-          
-          // Copy pages to merged PDF
-          const copiedPages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
-          copiedPages.forEach((page) => {
-            mergedPdf.addPage(page);
-          });
+            // Handle rateConfirmation and accessorialsFiles as PDFs
+            const response = await fetch(file.fileLocation);
+            const arrayBuffer = await response.arrayBuffer();
+            const pdfDoc = await PDFDocument.load(arrayBuffer);
+
+            // Copy pages to merged PDF
+            const copiedPages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
+            copiedPages.forEach((page) => {
+                mergedPdf.addPage(page);
+            });
         }
-      } else {
-        // Handle rateConfirmation and accessorialsFiles as PDFs
-        const response = await fetch(file.fileLocation);
-        const arrayBuffer = await response.arrayBuffer();
-        const pdfDoc = await PDFDocument.load(arrayBuffer);
-  
-        // Copy pages to merged PDF
-        const copiedPages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
-        copiedPages.forEach((page) => {
-          mergedPdf.addPage(page);
-        });
-      }
     }
-  
+
     // Serialize the merged document to bytes (a Uint8Array)
     const mergedPdfBytes = await mergedPdf.save();
-  
+
     // Save the merged PDF to a file
     fs.writeFileSync('merged.pdf', mergedPdfBytes);
-  }
+}
 
 
-//   async function convertImageToPdf(arrayBuffer, mergedPdf,filetype) {
-//     try {
-//       console.log("Received array buffer of length:", arrayBuffer.byteLength);
-  
-//       console.log("Converting array buffer to a base64 string...");
-//       const base64String = Buffer.from(arrayBuffer).toString('base64');
-//       console.log("Base64 string created");
-  
-//       console.log("Loading image from base64 string...");
-//       const img = await loadImage(`data:${filetype};base64,${base64String}`);
-//       console.log("Image loaded:");
-  
-//       console.log("Creating new PDF document...");
-//       const pdfDoc = await PDFDocument.create();
-//       console.log("PDF document created");
-  
-//       console.log("Adding new page to PDF document with dimensions:", img.width, img.height);
-//       const page = pdfDoc.addPage([612, 792]);
-//       console.log("Page added to PDF document");
-  
-//       console.log("Embedding image into PDF document...");
-//       const pngImage = await pdfDoc.embedJpg(arrayBuffer);
-//       console.log("Image embedded into PDF document");
-  
-//       console.log("Drawing image on the PDF page...");
-//       page.drawImage(pngImage, {
-//         x: 0,
-//         y: 0,
-//         width: img.width,
-//         height: img.height,
-//       });
-//       console.log("Image drawn on PDF page");
-  
-//       console.log("Copying pages to merged PDF...");
-//       const copiedPages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
-//       copiedPages.forEach((page) => {
-//         mergedPdf.addPage(page);
-//       });
-//       console.log("Pages copied to merged PDF");
-//     } catch (error) {
-//       console.error("An error occurred during the conversion process:", error);
-//     }
-//   }
-  
 async function convertImageToPdf(arrayBuffer, mergedPdf, filetype) {
     try {
         const base64String = Buffer.from(arrayBuffer).toString('base64');
@@ -268,4 +225,4 @@ async function convertImageToPdf(arrayBuffer, mergedPdf, filetype) {
     }
 }
 
-module.exports=BEInvoices;
+module.exports = BEInvoices;
