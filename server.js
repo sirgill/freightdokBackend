@@ -11,6 +11,10 @@ const { catchErrors } = require('./utils/utils');
 const { schedulers } = require('./utils/schedulers');
 const chBidsHook = require('./webhooks/chBids');
 const corsAnywhere = require('cors-anywhere');
+const BEInvoices = require('./routes/api/triumph-bank-sftp/be-invoices');
+const Invoice_v2 = require('./models/Invoice_v2');
+
+
 
 
 
@@ -70,6 +74,35 @@ app.use('/api/rolePermission', require('./routes/api/rolePermission'));
 app.post('/newtrul/webhook/v1/request_status_update', newtrulWebhook);
 app.post("/handle-ch-bids", chBidsHook);
 // ---------------------------------------------------------------------------
+
+
+app.post("/create-be-invoice-pdf",(req, res)=>{
+    BEInvoices(req.body.loadIds,res)
+})
+
+app.post('/create-invoicev2', async (req, res) => {
+    const { orgId, loadNumber, notes, services } = req.body;
+    try {
+      // Create a new invoice entry
+      
+      const newInvoice = new Invoice_v2({
+        orgId,
+        loadNumber,
+        notes,
+        services
+      });
+  
+      // Save the invoice to the database
+      const savedInvoice = await newInvoice.save();
+  
+      res.status(201).json(savedInvoice);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Error creating invoice', error });
+    }
+  });
+
+
 
 app.get('/', (req, res) => res.send('API Running'));
 
