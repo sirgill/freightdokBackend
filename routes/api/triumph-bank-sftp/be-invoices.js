@@ -9,12 +9,11 @@ const BEInvoices = async (req, res) => {
     const { body: { loadIds } = {}, user: { orgName } = {} } = req;
     console.log("LoadIds for which invoices needs to be generated : ", loadIds)
     try {
-        const responses = await Promise.all(loadIds.map(loadId => {
+        const invoices_in_creation = await Promise.all(loadIds.map(loadId => {
             return createInvoicePDF({ loadId, orgName })
         }))
-        console.log(responses)
-
-        res.send({ success: true, message: "generated all invoices on the backend dynamically !" })
+        console.log(invoices_in_creation)
+        res.send({ success: true,data:invoices_in_creation,message: "Invoices Created Sucessfully !" })
     }
     catch (err) {
         console.log("Error Message :", err.message)
@@ -33,13 +32,13 @@ const createInvoicePDF = async ({ loadId, orgName }) => {
 
         if (services.length && loadData.bucketFiles) {
             mergePDFs(loadData.bucketFiles, loadData, orgName, services, notes)
-            return loadId;
+            return {loadId,invoiceCreated:true,message:'Invoice generated successfully for loadId: ' + loadId};
         } else {
-            throw Error('Invoice not generated for loadId: ' + loadId);
+            return {loadId,invoiceCreated:false,message:'Invoice not generated for loadId: ' + loadId};
         }
     } catch (e) {
         console.log(e.message);
-        return e.message
+        return {loadId,invoiceCreated:false,message:'Invoice not generated for loadId: ' + loadId};
     }
 }
 
