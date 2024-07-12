@@ -77,7 +77,6 @@ router.post(
       ]);
       const user = userObject.length > 0 ? userObject[0] : null;
 
-      console.log(user);
       if (!user) {
         return res.status(400).json({ errors: [{ msg: "Invalid Credentials" }], success: false, message: `Couldn't find your freightdok Account` });
       }

@@ -77,9 +77,7 @@ app.post("/handle-ch-bids", chBidsHook);
 // ---------------------------------------------------------------------------
 
 
-app.post("/create-be-invoice-pdf", (req, res) => {
-  BEInvoices(req.body.loadIds, res)
-})
+app.post("/create-be-invoice-pdf", auth, BEInvoices)
 
 app.post('/api/create-invoicev2', auth, async (req, res) => {
   const { orgId, id, orgName } = req.user;

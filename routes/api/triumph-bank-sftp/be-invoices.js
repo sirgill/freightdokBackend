@@ -2,13 +2,15 @@ const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
 const fs = require('fs');
 const Load = require('../../../models/Load');
 const { createCanvas, loadImage } = require('canvas');
+const Invoice_v2 = require('../../../models/Invoice_v2');
 
 
-const BEInvoices = async (loadIds, res) => {
+const BEInvoices = async (req, res) => {
+    const { body: { loadIds } = {}, user: { orgName } = {} } = req;
     console.log("LoadIds for which invoices needs to be generated : ", loadIds)
     try {
         await Promise.all(loadIds.map(loadId => {
-            createInvoicePDF(loadId)
+            createInvoicePDF({ loadId, orgName })
         }))
 
         res.send({ success: true, message: "generated all invoices on the backend dynamically !" })
@@ -19,26 +21,34 @@ const BEInvoices = async (loadIds, res) => {
 }
 
 
-const createInvoicePDF = async (loadID) => {
+const createInvoicePDF = async ({ loadId, orgName }) => {
 
-    const loadData = await Load.findOne({ loadNumber: loadID })
+    try {
+        const loadData = await Load.findOne({ loadNumber: loadId });
+        const { services = [], notes = 'N.A' } = await Invoice_v2.findOne({ loadNumber: loadId })
+            .sort({ createdAt: -1 })
+            .limit(1);
 
-    console.log("loadData", loadData.bucketFiles)
 
-    if (loadData.bucketFiles) {
-        mergePDFs(loadData.bucketFiles, loadData)
+        if (loadData.bucketFiles) {
+            mergePDFs(loadData.bucketFiles, loadData, orgName, services, notes)
+        }
+    } catch (e) {
+        console.log(e.message);
     }
 }
 
 
-const addTopPortionOfThePDF = async (mergedPdf, loadData) => {
+const addTopPortionOfThePDF = async (mergedPdf, loadData, { orgName, services, notes }) => {
     const customPdf = await PDFDocument.create();
-    const page = customPdf.addPage([612, 792]);
+    const page = customPdf.addPage([612, 792]),
+        { brokerage = '--' } = loadData || {};
 
     const helveticaFont = await customPdf.embedFont(StandardFonts.Helvetica);
+    const boldFont = await customPdf.embedFont(StandardFonts.HelveticaBold);
 
     // Draw header
-    page.drawText('Sunny Freight', {
+    page.drawText(orgName, {
         x: 50,
         y: 750, // Adjusted to start closer to the top
         size: 20,
@@ -63,7 +73,7 @@ const addTopPortionOfThePDF = async (mergedPdf, loadData) => {
         color: rgb(0, 0, 0),
     });
 
-    page.drawText('Arrive Logistics', {
+    page.drawText(brokerage, {
         x: 100,
         y: 700, // Adjusted to start closer to the top
         size: 12,
@@ -72,72 +82,76 @@ const addTopPortionOfThePDF = async (mergedPdf, loadData) => {
     });
 
     page.drawText(`Load Number: ${loadData.loadNumber}`, {
-        x: 400,
+        x: 450,
         y: 700, // Adjusted to start closer to the top
         size: 12,
         font: helveticaFont,
         color: rgb(0, 0, 0),
     });
 
-    // Draw services table headers
-    page.drawText('Services', {
-        x: 50,
-        y: 650, // Adjusted to start closer to the top
-        size: 12,
-        font: helveticaFont,
-        color: rgb(0, 0, 0),
-    });
 
-    page.drawText('Quantity', {
-        x: 200,
-        y: 650, // Adjusted to start closer to the top
-        size: 12,
-        font: helveticaFont,
-        color: rgb(0, 0, 0),
-    });
-
-    page.drawText('Price', {
-        x: 300,
-        y: 650, // Adjusted to start closer to the top
-        size: 12,
-        font: helveticaFont,
-        color: rgb(0, 0, 0),
-    });
-
-    page.drawText('Amount', {
-        x: 400,
-        y: 650, // Adjusted to start closer to the top
-        size: 12,
-        font: helveticaFont,
-        color: rgb(0, 0, 0),
-    });
-
-    // Draw table line
+    // Draw a line to separate the header from the table
     page.drawLine({
-        start: { x: 50, y: 640 }, // Adjusted y position
-        end: { x: 550, y: 640 }, // Adjusted y position
+        start: { x: 50, y: 680 },
+        end: { x: 550, y: 680 },
         thickness: 1,
         color: rgb(0, 0, 0),
     });
 
-    // Draw total
-    page.drawText('Total: $0.00', {
-        x: 500,
-        y: 600, // Adjusted to start closer to the top
-        size: 12,
-        font: helveticaFont,
+    // Define table layout
+    const startX = 50;
+    const startY = 660;
+    const rowHeight = 25;
+    const columnWidths = [100, 150, 100, 100, 100];
+    const tableWidth = columnWidths.reduce((a, b) => a + b, 0);
+
+    const totalAmount = services.reduce((sum, row) => sum + Number(row.amount), 0);
+
+    page.drawRectangle({
+        x: startX,
+        y: startY,
+        width: tableWidth,
+        height: rowHeight,
+        color: rgb(0.9, 0.9, 0.9),
+    });
+    page.drawText('Services', { x: startX + 5, y: startY + 5, font: boldFont, size: 12, });
+    page.drawText('Description', { x: startX + columnWidths[0] + 5, y: startY + 5, font: boldFont, size: 12, });
+    page.drawText('Quantity', { x: startX + columnWidths[0] + columnWidths[1] + 5, y: startY + 5, font: boldFont, size: 12, });
+    page.drawText('Price', { x: startX + columnWidths[0] + columnWidths[1] + columnWidths[2] + 5, y: startY + 5, font: boldFont, size: 12, });
+    page.drawText('Amount', { x: startX + columnWidths[0] + columnWidths[1] + columnWidths[2] + columnWidths[3] + 5, y: startY + 5, font: boldFont, size: 12, });
+
+    // Draw rows
+    services.forEach((row, index) => {
+        const y = startY - (index + 1) * rowHeight;
+        page.drawText(row.serviceName, { x: startX + 5, y: y + 5, font: helveticaFont, size: 12, });
+        page.drawText(row.description, { x: startX + columnWidths[0] + 5, y: y + 5, font: helveticaFont, size: 12, });
+        page.drawText(row.quantity.toString(), { x: startX + columnWidths[0] + columnWidths[1] + 5, y: y + 5, font: helveticaFont, size: 12, });
+        page.drawText(row.price.toString(), { x: startX + columnWidths[0] + columnWidths[1] + columnWidths[2] + 5, y: y + 5, font: helveticaFont, size: 12, });
+        page.drawText(`$${Number(row.amount).toFixed(2)}`, { x: startX + columnWidths[0] + columnWidths[1] + columnWidths[2] + columnWidths[3] + 5, y: y + 5, font: helveticaFont, size: 12, });
+    });
+
+    page.drawLine({
+        start: { x: 50, y: startY - (services.length + 1) * rowHeight + 5 },
+        end: { x: 600, y: startY - (services.length + 1) * rowHeight + 5 },
+        thickness: 1,
         color: rgb(0, 0, 0),
     });
+
+    page.drawText(`Notes: ${notes}`, { x: startX, y: startY - (services.length + 1) * rowHeight - 10, font: boldFont, size: 12, });
+
+    // Draw total
+    page.drawText(`Total: $${totalAmount.toFixed(2)}`, { x: startX + tableWidth - 100, y: startY - (services.length + 1) * rowHeight - 10, font: boldFont, size: 12, });
+
 
     // Merge the custom PDF page first
     const [customPage] = await mergedPdf.copyPages(customPdf, [0]);
     mergedPdf.addPage(customPage);
 }
 
-async function mergePDFs(files, loadData) {
+async function mergePDFs(files, loadData, orgName, services, notes) {
     // Create a new PDF document
     const mergedPdf = await PDFDocument.create();
-    addTopPortionOfThePDF(mergedPdf, loadData)
+    addTopPortionOfThePDF(mergedPdf, loadData, { orgName, services, notes })
 
     // Iterate over each file
     for (const file of files) {
@@ -145,11 +159,8 @@ async function mergePDFs(files, loadData) {
             // Handle proofDelivery as an image or any type
             const response = await fetch(file.fileLocation);
             const arrayBuffer = await response.arrayBuffer();
-            console.log("ArrayBuffer", arrayBuffer)
-            console.log("ArrayBuffer", response.headers)
             // Check if it's an image (you can add other type checks here)
             if (response.headers.get('content-type').startsWith('image')) {
-                console.log("Its an Image ")
                 convertImageToPdf(arrayBuffer, mergedPdf, response.headers.get('content-type'))
 
             } else {
@@ -180,7 +191,55 @@ async function mergePDFs(files, loadData) {
     const mergedPdfBytes = await mergedPdf.save();
 
     // Save the merged PDF to a file
-    fs.writeFileSync('merged.pdf', mergedPdfBytes);
+    fs.writeFile(`${loadData.loadNumber}.pdf`, mergedPdfBytes, (err, res) => {
+        if (err) {
+            console.log(err.message);
+        } else {
+            console.log('File Saved Successfully');
+        }
+    });
+}
+
+function createServicesTable({ serviceName, quantity, price, description, amount }) {
+    page.drawText(serviceName, {
+        x: 50,
+        y: 650, // Adjusted to start closer to the top
+        size: 12,
+        font: helveticaFont,
+        color: rgb(0, 0, 0),
+    });
+
+    page.drawText(description, {
+        x: 200,
+        y: 650, // Adjusted to start closer to the top
+        size: 12,
+        font: helveticaFont,
+        color: rgb(0, 0, 0),
+    });
+
+    page.drawText(quantity, {
+        x: 200,
+        y: 650, // Adjusted to start closer to the top
+        size: 12,
+        font: helveticaFont,
+        color: rgb(0, 0, 0),
+    });
+
+    page.drawText(price, {
+        x: 300,
+        y: 650, // Adjusted to start closer to the top
+        size: 12,
+        font: helveticaFont,
+        color: rgb(0, 0, 0),
+    });
+
+    page.drawText(amount, {
+        x: 400,
+        y: 650, // Adjusted to start closer to the top
+        size: 12,
+        font: helveticaFont,
+        color: rgb(0, 0, 0),
+    });
 }
 
 
