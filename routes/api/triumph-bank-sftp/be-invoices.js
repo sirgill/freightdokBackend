@@ -3,6 +3,8 @@ const fs = require('fs');
 const Load = require('../../../models/Load');
 const { createCanvas, loadImage } = require('canvas');
 const Invoice_v2 = require('../../../models/Invoice_v2');
+const TriumphCSVWriter = require('./triumphcsv_writer.js');
+const uploader = require('../../../utils/uploader.js');
 
 
 const BEInvoices = async (req, res) => {
@@ -14,9 +16,31 @@ const BEInvoices = async (req, res) => {
         }))
         console.log(invoices_in_creation)
         res.send({ success: true,data:invoices_in_creation,message: "Invoices Created Sucessfully !" })
+        //Create invoices csv for invoices successfully created
+
+        const invoices_all=invoices_in_creation.filter(invoice=>invoice.invoiceCreated===true)
+        const csvfile=TriumphCSVWriter(invoices_all)
+        console.log("#########################")
+        console.log(">>>>>",invoices_all)
+        console.log("#########################")
+        uploadToS3(invoices_all)
+
+
     }
     catch (err) {
         console.log("Error Message :", err.message)
+    }
+}
+
+const uploadToS3=async (invoices_created)=>{
+    try{
+        const filePaths=invoices_created.filter(inv=>inv.invoice_pdf_path);
+        const fileStreams= filePaths.map(fl=>fs.createReadStream(fl));
+        const uploaded_files=await uploader(fileStreams);
+        console.log(uploaded_files)
+    }
+    catch(err){
+        console.log("Error uploading files to file upload server")
     }
 }
 
@@ -25,14 +49,17 @@ const createInvoicePDF = async ({ loadId, orgName }) => {
 
     try {
         const loadData = await Load.findOne({ loadNumber: loadId });
-        const { services = [], notes = '' } = await Invoice_v2.findOne({ loadNumber: loadId })
+        const { services = [], notes = '',createdAt } = await Invoice_v2.findOne({ loadNumber: loadId })
             .sort({ createdAt: -1 })
             .limit(1);
 
 
         if (services.length && loadData.bucketFiles) {
-            mergePDFs(loadData.bucketFiles, loadData, orgName, services, notes)
-            return {loadId,invoiceCreated:true,message:'Invoice generated successfully for loadId: ' + loadId};
+            const invoice_pdf_path=await mergePDFs(loadData.bucketFiles, loadData, orgName, services, notes)
+            console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+            console.log({loadId,...loadData._doc,services,invoiceCreatedAt:createdAt,invoiceCreated:true,message:'Invoice generated successfully for loadId: ' + loadId})
+            console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+            return {invoice_pdf_path,loadId,...loadData._doc,services,invoiceCreatedAt:createdAt,invoiceCreated:true,message:'Invoice generated successfully for loadId: ' + loadId};
         } else {
             return {loadId,invoiceCreated:false,message:'Invoice not generated for loadId: ' + loadId};
         }
@@ -153,11 +180,9 @@ const addTopPortionOfThePDF = async (mergedPdf, loadData, { orgName, services, n
 }
 
 async function mergePDFs(files, loadData, orgName, services, notes) {
-    // Create a new PDF document
     const mergedPdf = await PDFDocument.create();
     addTopPortionOfThePDF(mergedPdf, loadData, { orgName, services, notes })
 
-    // Iterate over each file
     for (const file of files) {
         if (file.fileType === 'proofDelivery') {
             // Handle proofDelivery as an image or any type
@@ -191,10 +216,8 @@ async function mergePDFs(files, loadData, orgName, services, notes) {
         }
     }
 
-    // Serialize the merged document to bytes (a Uint8Array)
     const mergedPdfBytes = await mergedPdf.save();
 
-    // Save the merged PDF to a file
     fs.writeFile(`${loadData.loadNumber}.pdf`, mergedPdfBytes, (err, res) => {
         if (err) {
             console.log(err.message);
@@ -202,6 +225,7 @@ async function mergePDFs(files, loadData, orgName, services, notes) {
             console.log('File Saved Successfully');
         }
     });
+    return `${loadData.loadNumber}.pdf`
 }
 
 function createServicesTable({ serviceName, quantity, price, description, amount }) {
