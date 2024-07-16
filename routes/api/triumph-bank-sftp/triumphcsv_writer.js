@@ -40,7 +40,10 @@ const TriumphCSVWriter = async(s_invoices = []) => {
     { id: 'INVAMT', title: 'INVAMT' },
   ];
 
-  const filePath = `${s_invoices[0].loadNumber}.csv`;
+  const filePath = `./invoices_csv/${s_invoices[0].loadNumber}.csv`;
+  if (!fs.existsSync("./invoices_csv")) {
+    fs.mkdirSync("./invoices_csv", { recursive: true });
+  }
 
   const csvWriter = createCsvWriter({
     path: filePath,

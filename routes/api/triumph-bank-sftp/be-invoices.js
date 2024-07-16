@@ -5,6 +5,7 @@ const { createCanvas, loadImage } = require('canvas');
 const Invoice_v2 = require('../../../models/Invoice_v2');
 const TriumphCSVWriter = require('./triumphcsv_writer.js');
 const uploader = require('../../../utils/uploader.js');
+const connectToSftpServerUploadFile = require('./triumph-sftp.js');
 
 
 const BEInvoices = async (req, res) => {
@@ -19,12 +20,15 @@ const BEInvoices = async (req, res) => {
         //Create invoices csv for invoices successfully created
 
         const invoices_all=invoices_in_creation.filter(invoice=>invoice.invoiceCreated===true)
-        const csvfile=TriumphCSVWriter(invoices_all)
-        console.log("#########################")
-        console.log(">>>>>",invoices_all)
-        console.log("#########################")
-        uploadToS3(invoices_all)
+        const csvfilepath=TriumphCSVWriter(invoices_all)
+        // uploadToS3AndUpdateLoad(invoices_all)
+        const filePaths=invoices_all.map(inv=>inv.invoice_pdf_path);  
+        
+        const allInvoicesSubmittedToTriumph=await Promise.all(filePaths.map(async file=>{
+            return await connectToSftpServerUploadFile(file);
+        }))
 
+        connectToSftpServerUploadFile(csvfilepath);
 
     }
     catch (err) {
@@ -32,15 +36,23 @@ const BEInvoices = async (req, res) => {
     }
 }
 
-const uploadToS3=async (invoices_created)=>{
+const uploadToS3AndUpdateLoad=async (invoices_created)=>{
     try{
-        const filePaths=invoices_created.filter(inv=>inv.invoice_pdf_path);
+        const filePaths=invoices_created.map(inv=>inv.invoice_pdf_path);   
+        const loadIds=invoices_created.map(inv=>inv.loadId);    
         const fileStreams= filePaths.map(fl=>fs.createReadStream(fl));
-        const uploaded_files=await uploader(fileStreams);
-        console.log(uploaded_files)
+        const fileObj={isStream:true,allFiles:fileStreams,filenames:filePaths}
+        const uploaded_files=await uploader(fileObj);
+        if(uploaded_files.success){
+            const {data=[]}=uploaded_files;
+               data.map(async (uploadedFile,index)=>{
+                        uploadedFile.fileLocation;
+                        await Load.updateOne({ loadNumber: loadIds[index] }, { $set: { invoiceUrl:uploadedFile.fileLocation} }, { multi: true });
+               }) 
+        }
     }
     catch(err){
-        console.log("Error uploading files to file upload server")
+        console.log("Error uploading files to file upload server",err.message)
     }
 }
 
@@ -56,9 +68,6 @@ const createInvoicePDF = async ({ loadId, orgName }) => {
 
         if (services.length && loadData.bucketFiles) {
             const invoice_pdf_path=await mergePDFs(loadData.bucketFiles, loadData, orgName, services, notes)
-            console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-            console.log({loadId,...loadData._doc,services,invoiceCreatedAt:createdAt,invoiceCreated:true,message:'Invoice generated successfully for loadId: ' + loadId})
-            console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
             return {invoice_pdf_path,loadId,...loadData._doc,services,invoiceCreatedAt:createdAt,invoiceCreated:true,message:'Invoice generated successfully for loadId: ' + loadId};
         } else {
             return {loadId,invoiceCreated:false,message:'Invoice not generated for loadId: ' + loadId};
@@ -218,14 +227,19 @@ async function mergePDFs(files, loadData, orgName, services, notes) {
 
     const mergedPdfBytes = await mergedPdf.save();
 
-    fs.writeFile(`${loadData.loadNumber}.pdf`, mergedPdfBytes, (err, res) => {
+    if (!fs.existsSync("./invoices_pdfs")) {
+        fs.mkdirSync("./invoices_pdfs", { recursive: true });
+      }
+    
+
+    fs.writeFile(`./invoices_pdfs/${loadData.loadNumber}.pdf`, mergedPdfBytes, (err, res) => {
         if (err) {
             console.log(err.message);
         } else {
             console.log('File Saved Successfully');
         }
     });
-    return `${loadData.loadNumber}.pdf`
+    return `./invoices_pdfs/${loadData.loadNumber}.pdf`
 }
 
 function createServicesTable({ serviceName, quantity, price, description, amount }) {
