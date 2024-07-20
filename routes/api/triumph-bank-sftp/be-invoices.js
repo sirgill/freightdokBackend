@@ -21,7 +21,7 @@ const BEInvoices = async (req, res) => {
 
         const invoices_all=invoices_in_creation.filter(invoice=>invoice.invoiceCreated===true)
         const csvfilepath=TriumphCSVWriter(invoices_all)
-        // uploadToS3AndUpdateLoad(invoices_all)
+        uploadToS3AndUpdateLoad(invoices_all)
         const filePaths=invoices_all.map(inv=>inv.invoice_pdf_path);  
         
         const allInvoicesSubmittedToTriumph=await Promise.all(filePaths.map(async file=>{
