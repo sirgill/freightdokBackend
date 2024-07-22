@@ -49,7 +49,7 @@ router.post(
 
     try {
       //See if user exists
-      const userObject = await User.aggregate([
+      let userObject = await User.aggregate([
         {
           $match: { email }
         },
@@ -75,7 +75,12 @@ router.post(
           }
         }
       ]);
-      const user = userObject.length > 0 ? userObject[0] : null;
+
+      if (superadmin) {
+        userObject = await User.find({ email })
+      }
+
+      let user = userObject.length > 0 ? userObject[0] : null;
 
       if (!user) {
         return res.status(400).json({ errors: [{ msg: "Invalid Credentials" }], success: false, message: `Couldn't find your freightdok Account` });
@@ -83,7 +88,7 @@ router.post(
 
       if (superadmin) {
         if (user?.role !== 'superAdmin')
-          res.status(403).json({ status: false, message: 'Only super admin has access.' })
+          return res.status(403).json({ status: false, message: 'Only super admin has access.' })
       }
 
       const isMatch = await bcrypt.compare(password, user.password);
