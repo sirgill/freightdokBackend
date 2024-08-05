@@ -1,11 +1,22 @@
 const express = require("express");
 const auth = require("../../middleware/auth");
 const Load = require("../../models/Load");
+const { getRolePermissionsByRoleName } = require("../../utils/dashboardUtils");
+const RolePermission = require("../../models/RolePermission");
 const router = express.Router();
 
 router.get('/', auth, async (req, res) => {
     try {
-        const { page = 1, limit = 100, search = '', sortField = 'updatedAt', sortOrder } = req.query;
+        const { page = 1, limit = 100, search = '', sortField = 'updatedAt', sortOrder } = req.query,
+            { id, role } = req.user;
+        const doesRoleHasViewPermission = await RolePermission.findOne({ 'permissions.history.view': true, userId: id });
+
+        if (!doesRoleHasViewPermission) {
+            return res.status(403).json({ message: "Unauthorized", success: false });
+        }
+
+        const { permissions: { history: { hasElevatedPrivileges = false } = {} } = {} } = doesRoleHasViewPermission || {};
+        const [adminRoleData] = await getRolePermissionsByRoleName('admin') || [];
         const to_search = search.toLowerCase();
         const regex = { $regex: to_search, $options: 'i' };
         const query = {
@@ -17,6 +28,13 @@ router.get('/', auth, async (req, res) => {
                 { "drop.dropCity": regex },
                 { "drop.dropState": regex },
             ]
+        }
+
+        // Only admins will be seeing all the load history
+        if (role.toLowerCase() === adminRoleData?.roleName.toLowerCase() || hasElevatedPrivileges) {
+            query.orgId = req.user.orgId;
+        } else {
+            query.user = id;
         }
         const totalCountPromise = Load.countDocuments(query);
 

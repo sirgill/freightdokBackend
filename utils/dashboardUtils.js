@@ -17,7 +17,7 @@ const DEFAULT_PERMISSIONS = { add: false, edit: false, delete: false, view: fals
 
 const getRolePermissionsByRoleName = async (roleName) => {
     try {
-        const all = await RolePermission.find({ roleName });
+        const all = await RolePermission.find({ roleName: { $regex: roleName.toLowerCase(), $options: 'i' } });
         return all;
     } catch (error) {
         return null
