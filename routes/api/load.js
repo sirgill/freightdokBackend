@@ -46,7 +46,7 @@ router.get("/me", auth, async (req, res) => {
       error, allLoads, load, limit, total, totalPages, currentPage
     } = await getLoads(req.query, req.user.id, req.user);
     if (error) {
-      return res.status(error.status).json({ msg: error.message });
+      return res.status(error.status).json({ message: error.message });
     }
     return res.json({ allLoads, load, limit, total, totalPages, currentPage });
   } catch (err) {
@@ -136,11 +136,23 @@ const getLoads = async ({ page = 1, limit = 4, search = '', module = '' }, _id, 
     }
   }
 
+  const doesRoleHasViewPermission = await RolePermission.findOne({ 'permissions.loads.view': true, userId: _id });
+
+  if (!doesRoleHasViewPermission) {
+    return {
+      error: {
+        status: 403,
+        message: "Unauthorized"
+      }
+    };
+  }
+  const { permissions: { loads: { hasElevatedPrivileges = false } = {} } = {} } = doesRoleHasViewPermission || {};
+
   /**
    * Since all the below roles share the loads among themselves for visibility, we have to show all the loads based on orgId to them
    */
-  const isAdmin = ['admin', 'dispatch', 'support', 'invoice'].includes(reqUser.role.toLowerCase());
-  if (isAdmin)
+  const isAdmin = ['admin', 'dispatch', 'support', 'invoice', 'superadmin'].includes(reqUser.role.toLowerCase());
+  if (isAdmin || hasElevatedPrivileges)
     query['orgId'] = reqUser.orgId;
   else
     query['user'] = _id;
