@@ -14,9 +14,7 @@ const corsAnywhere = require('cors-anywhere');
 const BEInvoices = require('./routes/api/triumph-bank-sftp/be-invoices');
 const Invoice_v2 = require('./models/Invoice_v2');
 const auth = require('./middleware/auth');
-
-
-
+const { authorizedInvoiceUserWithElevatedPriv } = require('./middleware/permissions');
 
 
 const app = express();
@@ -77,7 +75,7 @@ app.post("/handle-ch-bids", chBidsHook);
 // ---------------------------------------------------------------------------
 
 
-app.post("/create-be-invoice-pdf", auth, BEInvoices)
+app.post("/create-be-invoice-pdf", auth, authorizedInvoiceUserWithElevatedPriv, BEInvoices)
 
 app.post('/api/create-invoicev2', auth, async (req, res) => {
   const { orgId, id, orgName } = req.user;

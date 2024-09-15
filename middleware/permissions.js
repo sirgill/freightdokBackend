@@ -21,8 +21,27 @@ const authSuperAdmin = (req, res, next) => {
     next();
 };
 
+const authorizedInvoiceUserWithElevatedPriv = async (req, res, next) => {
+    try {
+        const { id } = req.user;
+        const doesRoleHasViewPermission = await RolePermission.findOne({ 'permissions.invoices.view': true, userId: id });
+
+        if (!doesRoleHasViewPermission) {
+            return res.status(403).json({ message: "User Forbidden", success: false });
+        }
+        const { permissions: { invoices: { hasElevatedPrivileges = false } = {} } = {} } = doesRoleHasViewPermission || {};
+        if (!hasElevatedPrivileges) {
+            return res.status(403).json({ message: "User Forbidden", success: false });
+        }
+        next();
+    } catch (error) {
+        return res.status(400).json({ message: "Error validating user", success: false });
+    }
+}
+
 module.exports = {
     authAdmin,
     ROLE_NAMES,
-    authSuperAdmin
+    authSuperAdmin,
+    authorizedInvoiceUserWithElevatedPriv
 };

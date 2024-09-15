@@ -150,8 +150,9 @@ const getLoads = async ({ page = 1, limit = 4, search = '', module = '' }, _id, 
 
   /**
    * Since all the below roles share the loads among themselves for visibility, we have to show all the loads based on orgId to them
+   * Bypass admin and superadmin to view all the loads within the org
    */
-  const isAdmin = ['admin', 'dispatch', 'support', 'invoice', 'superadmin'].includes(reqUser.role.toLowerCase());
+  const isAdmin = ['admin', 'superadmin'].includes(reqUser.role.toLowerCase());
   if (isAdmin || hasElevatedPrivileges)
     query['orgId'] = reqUser.orgId;
   else
