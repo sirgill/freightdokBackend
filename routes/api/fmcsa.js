@@ -9,6 +9,7 @@ const User = require("../../models/User");
 const { FetchSecret, createSecretCred } = require("../../secrets");
 const { authAdmin, ROLE_NAMES } = require("../../middleware/permissions");
 const { sendJson } = require("../../utils/utils");
+const uploaderV2 = require("../../utils/uploaderV2");
 
 router.get('/', auth, async (req, res) => {
     try {
@@ -104,6 +105,29 @@ router.post('/', auth, upload.any(), async (req, res) => {
         console.log(error.message)
     }
 })
+
+
+
+router.post('/tlane-upload', auth, upload.any(), async (req, res) => {
+    try {
+        const files = req.files;
+        let { success, data = [] } = await uploaderV2(files);
+        if (success) {
+         res.status(200).json(data)
+        }
+        else {
+            res.status(400).json({ message: 'Unable to Upload files. Please try again later.' })
+        }
+    } catch (error) {
+        console.log(error.message)
+    }
+})
+
+
+
+
+
+
 
 /*
     KEY         Value
