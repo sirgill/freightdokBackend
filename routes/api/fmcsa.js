@@ -108,7 +108,7 @@ router.post('/', auth, upload.any(), async (req, res) => {
 
 
 
-router.post('/tlane-upload', auth, upload.any(), async (req, res) => {
+router.post('/tlane-upload', upload.any(), async (req, res) => {
     try {
         const files = req.files;
         let { success, data = [] } = await uploaderV2(files);
@@ -122,10 +122,6 @@ router.post('/tlane-upload', auth, upload.any(), async (req, res) => {
         console.log(error.message)
     }
 })
-
-
-
-
 
 
 
