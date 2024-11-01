@@ -3,11 +3,12 @@ const auth = require("../../middleware/auth");
 const router = express.Router();
 const User = require("../../models/User");
 const { authAdmin, ROLE_NAMES } = require("../../middleware/permissions");
-const RolePermission = require("../../models/RolePermission");
+const { getRolePermissionsByRoleName } = require("../../utils/dashboardUtils");
 
-router.post('/', auth, authAdmin, (req, resp) => {
+router.post('/', auth, authAdmin, async (req, resp) => {
     try {
         const { body = {} } = req;
+        const { orgId, id } = req.user;
         const { _id = null } = body;
         console.log('Updating Owner Operator', _id, body.firstName);
         const { firstName, phone } = body;
@@ -19,6 +20,8 @@ router.post('/', auth, authAdmin, (req, resp) => {
         } else if (!phone) {
             return resp.status(422).json({ success: false, message: 'Phone Number is mandatory' })
         }
+        const [rolePermission] = await getRolePermissionsByRoleName('owner operator');
+        const { _id: rolePermissionId, roleName } = rolePermission;
         /**
          * Update if _id exists in client request
          */
@@ -29,23 +32,35 @@ router.post('/', auth, authAdmin, (req, resp) => {
                 if (err) {
                     return resp.status(500).json({ message: 'Server Error while saving', _dbError: err.message });
                 }
-                resp.status(201).json({ message: 'Updated successfully' });
+                resp.status(200).json({ message: 'Updated successfully' });
             })
         } else {
-            resp.status(400).json({ success: false, data: 'This user does not exists' });
+            // Create new Owner Operator
+            const user = new User({ ...body, orgId, created_by: id, last_updated_by: id, rolePermissionId, role: roleName })
+            user.save()
+                .then(() => {
+                    return resp.status(201).json({ success: true, message: 'Owner Operator added' });
+                })
+                .catch(err => {
+                    if (err.name === 'MongoError' && err.code === 11000) {
+                        resp.status(403).json({ success: false, message: 'Email already exists' })
+                    } else
+                        resp.status(400).json({ success: false, message: 'Something went wrong. Please try again later!', _dbError: err.message })
+                })
         }
     } catch (error) {
         console.log('error while post "/"', error.message)
-        resp.status(500).json({ success: false, data: {} });
+        resp.status(500).json({ success: false, data: {}, message: error.message });
     }
 })
 
 router.get('/', auth, (req, res) => {
     const { orgId } = req.user;
-    const { page = 1, limit = 5 } = req.query,
+    const { page = 1, limit = 10 } = req.query,
         query = { orgId, role: { $in: [ROLE_NAMES.ownerOperator, 'Owner Operator'] } };
     try {
         User.find(query)
+            .populate('created_by', 'firstName lastName name')
             .limit(+limit)
             .skip((+page - 1) * limit)
             .then(async (result) => {
@@ -67,7 +82,13 @@ router.get('/:id', auth, authAdmin, (req, res) => {
         if (err) {
             return res.status(400).json({ success: false, message: 'This user does not exists', _dbError: err.message });
         }
-        res.status(200).json({ data: result });
+        const _result = {
+            firstName: result.firstName,
+            lastName: result.lastName,
+            email: result.email,
+            phone: result.phone,
+        }
+        res.status(200).json({ data: _result });
     })
 })
 

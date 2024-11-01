@@ -1,4 +1,4 @@
-const RolePermission = require("../models/RolePermission");
+const DefaultRolePermissions = require("../models/DefaultRolePermissions");
 
 const DASHBOARDS = [
     { "id": "bids", "label": "Bids" },
@@ -17,7 +17,7 @@ const DEFAULT_PERMISSIONS = { add: false, edit: false, delete: false, view: fals
 
 const getRolePermissionsByRoleName = async (roleName) => {
     try {
-        const all = await RolePermission.find({ roleName: { $regex: roleName.toLowerCase(), $options: 'i' } });
+        const all = await DefaultRolePermissions.find({ roleName: { $regex: roleName.toLowerCase(), $options: 'i' } });
         return all;
     } catch (error) {
         return null
