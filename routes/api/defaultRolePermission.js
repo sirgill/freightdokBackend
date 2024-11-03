@@ -103,8 +103,8 @@ router.put('/', auth, async (req, res) => {
             }
             const allPermissionOfRoleName = await getRolePermissionsByRoleName(roleName)
             if (allPermissionOfRoleName.length) {
-                const ids = allPermissionOfRoleName.map(permission => permission._id);
-                await RolePermission.updateMany({ _id: { $in: ids }, isDefault: true }, { $set: { permissions: newPermissions } });
+                const roleNames = allPermissionOfRoleName.map(permission => permission.roleName);
+                await RolePermission.updateMany({ roleName: { $in: roleNames }, isDefault: true }, { $set: { permissions: newPermissions } });
             }
             res.status(200).json({ message: 'Dashboard role mapping Updated successfully' });
         })
