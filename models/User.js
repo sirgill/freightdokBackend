@@ -13,6 +13,7 @@ const UserSchema = new mongoose.Schema({
   },
   orgId: {
     type: Schema.Types.ObjectId,
+    ref: 'organizations'
   },
   password: {
     type: String,

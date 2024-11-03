@@ -5,13 +5,20 @@ const path = require("path")
 const uploadServerURL = 'http://18.220.161.91:7777/upload';
 
 const uploader = async (files, id, filePath = '../documents/load') => {
+  //Extra Check added if file stream is already available dont make another one
+  const isFileStream=files.isStream?true:false;
+  const filenames=isFileStream?files.filenames:[];
+  files=isFileStream?files.allFiles:files
+
+  console.log("isFileStream",files)
+
   // ==============================================
   return await new Promise((resolve, reject) => {
     try {
       setTimeout(async () => {
-        let data = await Promise.all(files.map(async (file) => {
+        let data = await Promise.all(files.map(async (file,fileIndex) => {
           var data = new FormData();
-          data.append('sampleFile', fs.createReadStream(path.join(__dirname, filePath, file.name || file.filename)));
+          data.append('sampleFile', isFileStream?file:fs.createReadStream(path.join(__dirname, filePath, file.name || file.filename)));
           var config = {
             method: 'post',
             url: uploadServerURL,
@@ -21,9 +28,9 @@ const uploader = async (files, id, filePath = '../documents/load') => {
             data: data
           };
           let fileuploadResponse = await axios(config);
-          // console.log(fileuploadResponse.data)
+          console.log("File uploaded successfully !",fileuploadResponse.data)
           if (fileuploadResponse.data.status) {
-            return ({ fileType: file.fieldname, fileLocation: fileuploadResponse.data.fileData.Location })
+            return ({ fileType: file.fieldname?file.fieldname:filenames[fileIndex], fileLocation: fileuploadResponse.data.fileData.Location })
           }
         }))
         resolve({ success: true, data: data, message: "All Files Successfully Uploded !" })

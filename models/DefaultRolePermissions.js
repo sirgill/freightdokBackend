@@ -6,6 +6,7 @@ const canAccess = {
     edit: Boolean,
     delete: Boolean,
     view: Boolean,
+    hasElevatedPrivileges: Boolean
 }
 
 const defaultRolePermission = mongoose.Schema({

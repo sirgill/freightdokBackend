@@ -2,10 +2,12 @@
   "name": "freightdok",
   "bookbidAPIRefrence": "$7867",
   "chrobinSonBidsAPIRefrence":"$3536",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Freight Workflow Platform for Carriers",
   "main": "server.js",
-  "references":["$78686- Secrets Manager Code"],
+  "references": [
+    "$78686- Secrets Manager Code"
+  ],
   "scripts": {
     "start": "nodemon server",
     "server": "nodemon --ignore client/",
@@ -19,10 +21,12 @@
     "aws-sdk": "^2.1472.0",
     "axios": "^0.24.0",
     "bcryptjs": "^2.4.3",
+    "canvas": "^2.11.2",
     "config": "^3.3.3",
     "connect-multiparty": "^2.2.0",
     "cors": "^2.8.5",
     "cors-anywhere": "^0.4.4",
+    "csv-writer": "^1.6.0",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "express-fileupload": "^1.2.1",
@@ -36,8 +40,10 @@
     "multer": "^1.4.2",
     "node-cron": "^3.0.2",
     "path": "^0.12.7",
+    "pdf-lib": "^1.17.1",
     "pdf-merger-js": "^3.1.0",
     "request": "^2.88.2",
+    "ssh2-sftp-client": "^10.0.3",
     "url": "^0.11.0"
   },
   "devDependencies": {

@@ -4,3 +4,6 @@ documents/load
 .idea
 .vscode
 package-lock.json
+
+invoices_csv
+invoices_pdfs

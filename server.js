@@ -11,7 +11,10 @@ const { catchErrors } = require('./utils/utils');
 const { schedulers } = require('./utils/schedulers');
 const chBidsHook = require('./webhooks/chBids');
 const corsAnywhere = require('cors-anywhere');
-
+const BEInvoices = require('./routes/api/triumph-bank-sftp/be-invoices');
+const Invoice_v2 = require('./models/Invoice_v2');
+const auth = require('./middleware/auth');
+const { authorizedInvoiceUserWithElevatedPriv } = require('./middleware/permissions');
 
 
 const app = express();
@@ -50,12 +53,14 @@ app.use('/api/ownerOperator', require('./routes/api/ownerOperator'));
 app.use('/api/carrierProfile', require('./routes/api/fmcsa'));
 app.use('/api/chRobinson', require('./routes/api/chRobinson'));
 app.use('/api/newtrulLoad', require('./routes/api/newTrulLoad'));
+app.use('/api/loadHistory', require('./routes/api/loadHistory'));
+app.use('/api/loadStatuses', require('./routes/api/loadStatuses'));
 /**
  * Route deprecated.
  */
 // app.use('/api/register', require('./routes/api/register'))
 app.use('/privacy-policy', (req, res) => {
-    res.sendFile(path.join(__dirname, '/documents/privacyPolicy', 'Privacy_Policy.html'))
+  res.sendFile(path.join(__dirname, '/documents/privacyPolicy', 'Privacy_Policy.html'))
 });
 app.use('/api/searchLocationAutocomplete', require('./routes/api/searchLocationAutocomplete'))
 app.use('/api/onboarding', require('./routes/api/onBoarding'));
@@ -85,6 +90,34 @@ app.post("/handle-ch-bids", (req, res) => {
 })
 //----------------------------------------
 
+app.post("/create-be-invoice-pdf", auth, authorizedInvoiceUserWithElevatedPriv, BEInvoices)
+
+app.post('/api/create-invoicev2', auth, async (req, res) => {
+  const { orgId, id, orgName } = req.user;
+  const { loadNumber, notes, services } = req.body;
+  try {
+    // Create a new invoice entry
+
+    const newInvoice = new Invoice_v2({
+      orgId,
+      loadNumber,
+      notes,
+      services,
+      orgName,
+      userId: id
+    });
+
+    // Save the invoice to the database
+    const savedInvoice = await newInvoice.save();
+
+    res.status(201).json({ success: true, message: 'Saved Successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error creating invoice', error });
+  }
+});
+
+
 
 app.get('/', (req, res) => res.send('API Running'));
 
@@ -96,14 +129,14 @@ const host = '0.0.0.0';
 const corsPORT = 3432;
 
 corsAnywhere.createServer({
-    originWhitelist: [], // Allow all origins
+  originWhitelist: [], // Allow all origins
 }).listen(corsPORT, host, () => {
-    console.log(`CORS Anywhere server is running on ${host}:${corsPORT}`);
+  console.log(`CORS Anywhere server is running on ${host}:${corsPORT}`);
 });
 
 app.listen(PORT, () => {
-    catchErrors();
-    schedulers();
-    console.log(`Server Started on port ${PORT}`)
+  catchErrors();
+  schedulers();
+  console.log(`Server Started on port ${PORT}`)
 });
 

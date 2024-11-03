@@ -18,10 +18,14 @@ router.get("/", auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password"),
       defaultRoles = await DefaultRolePermission.find({ roleName: { $nin: ['Super Admin', 'super admin'] } }).select('_id roleName');
+
+    const permissions = await RolePermission.findOne({ userId: user._id }).select('permissions _id roleName')
+
     res.json({
       user,
       roles,
-      allRoles: defaultRoles
+      allRoles: defaultRoles,
+      userPermissions: permissions
     });
   } catch (err) {
     console.error(err.message);
@@ -49,14 +53,46 @@ router.post(
 
     try {
       //See if user exists
-      let user = await User.findOne({ email });
+      let userObject = await User.aggregate([
+        {
+          $match: { email }
+        },
+        {
+          $lookup: {
+            from: 'organizations', // The name of the collection you're joining with
+            localField: 'orgId',
+            foreignField: '_id',
+            as: 'orgDetails'
+          }
+        },
+        {
+          $unwind: '$orgDetails'
+        },
+        {
+          $addFields: {
+            orgName: '$orgDetails.name', // Add orgDetails.name as orgName
+          }
+        },
+        {
+          $project: {
+            orgDetails: 0 // Exclude the original orgDetails object
+          }
+        }
+      ]);
+
+      if (superadmin) {
+        userObject = await User.find({ email })
+      }
+
+      let user = userObject.length > 0 ? userObject[0] : null;
+
       if (!user) {
         return res.status(400).json({ errors: [{ msg: "Invalid Credentials" }], success: false, message: `Couldn't find your freightdok Account` });
       }
 
       if (superadmin) {
         if (user?.role !== 'superAdmin')
-          res.status(403).json({ status: false, message: 'Only super admin has access.' })
+          return res.status(403).json({ status: false, message: 'Only super admin has access.' })
       }
 
       const isMatch = await bcrypt.compare(password, user.password);
@@ -65,19 +101,20 @@ router.post(
         return res.status(400).json({ errors: [{ msg: "Invalid Creds." }], message: 'Wrong password. Try again or click Forgot password to reset it.', success: false });
       }
 
-      const permissions = await RolePermission.findOne({ userId: user.id }).select('permissions _id roleName'),
+      const permissions = await RolePermission.findOne({ userId: user._id }).select('permissions _id roleName'),
         defaultRoles = await DefaultRolePermission.find({ roleName: { $nin: ['Super Admin', 'super admin'] } }).select('_id roleName');
 
       //Return jsonwebtoken
       const payload = {
         user: {
-          id: user.id,
+          id: user._id,
           email,
           role: user.role,
           name: user.name,
           orgId: user.orgId,
           firstName: user.firstName,
-          lastName: user.lastName
+          lastName: user.lastName,
+          orgName: user.orgName
         }
       };
 
