@@ -90,7 +90,7 @@ router.get("/invoice_loads", auth, async (req, res) => {
     const loads = await Load.find(query).populate('user', ['name', 'firstName', 'lastName'])
       // .select("loadNumber brokerage rate rateConfirmation proofDelivery")
       .limit(limit * 1)
-      .sort({ createdAt: -1 })
+      .sort({ updatedAt: -1 })
       .skip((page - 1) * limit)
       .exec();
     return res.json({
