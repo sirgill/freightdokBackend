@@ -1,3 +1,5 @@
+const RolePermission = require("../models/RolePermission");
+
 const ROLE_NAMES = {
     superAdmin: "superAdmin",
     dispatch: "dispatch",

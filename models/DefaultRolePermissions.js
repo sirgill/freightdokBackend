@@ -6,7 +6,10 @@ const canAccess = {
     edit: Boolean,
     delete: Boolean,
     view: Boolean,
-    hasElevatedPrivileges: Boolean
+    hasElevatedPrivileges: {
+        type: Boolean,
+        default: false
+    },
 }
 
 const defaultRolePermission = mongoose.Schema({
@@ -19,7 +22,13 @@ const defaultRolePermission = mongoose.Schema({
         loads: { ...canAccess },
         bids: { ...canAccess },
         drivers: { ...canAccess },
-        invoices: { ...canAccess },
+        invoices: {
+            ...canAccess,
+            canSendToTriumph: {
+                type: Boolean,
+                default: false
+            }
+        },
         facilities: { ...canAccess },
         ownerOperator: { ...canAccess },
         carrierProfile: { ...canAccess },
