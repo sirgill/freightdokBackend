@@ -18,10 +18,14 @@ router.get("/", auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password"),
       defaultRoles = await DefaultRolePermission.find({ roleName: { $nin: ['Super Admin', 'super admin'] } }).select('_id roleName');
+
+    const permissions = await RolePermission.findOne({ userId: user._id }).select('permissions _id roleName')
+
     res.json({
       user,
       roles,
-      allRoles: defaultRoles
+      allRoles: defaultRoles,
+      userPermissions: permissions
     });
   } catch (err) {
     console.error(err.message);

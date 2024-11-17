@@ -32,9 +32,20 @@ router.post('/assignDefaultPermissions', auth, (req, res) => {
             const { permissions, roleName } = result;
             const isExistUser = await User.findById({ _id: userId });
             if (isExistUser) {
-                const rolePermission = new RolePermission({ userId, permissions, roleName, isDefault: true });
-                await rolePermission.save();
-                res.status(201).json({ message: "User assigned with default permissions" });
+                /** We do not want to create records with same user id */
+                const existingRecord = await RolePermission.findOne({ userId });
+                if (existingRecord) {
+                    await RolePermission.updateOne(
+                        { _id: existingRecord._id }, // Identify the document to update
+                        { $set: { permissions, roleName, isDefault: true } }
+                    );
+                    res.status(200).json({ message: "User updated with default permissions of " + roleName });
+                }
+                else {
+                    const rolePermission = new RolePermission({ userId, permissions, roleName, isDefault: true });
+                    await rolePermission.save();
+                    res.status(201).json({ message: "New User in Role Permissions saved with default permissions of " + roleName });
+                }
             } else {
                 res.status(403).json({ message: 'User not found', success: false })
             }
@@ -103,8 +114,8 @@ router.put('/', auth, async (req, res) => {
             }
             const allPermissionOfRoleName = await getRolePermissionsByRoleName(roleName)
             if (allPermissionOfRoleName.length) {
-                const ids = allPermissionOfRoleName.map(permission => permission._id);
-                await RolePermission.updateMany({ _id: { $in: ids }, isDefault: true }, { $set: { permissions: newPermissions } });
+                const roleNames = allPermissionOfRoleName.map(permission => new RegExp(`^${permission.roleName}$`, 'i'));
+                await RolePermission.updateMany({ roleName: { $in: roleNames }, isDefault: true }, { $set: { permissions: newPermissions } });
             }
             res.status(200).json({ message: 'Dashboard role mapping Updated successfully' });
         })

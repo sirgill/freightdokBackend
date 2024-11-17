@@ -9,6 +9,7 @@ const checkObjectId = require("../../middleware/checkObjectId");
 const uploader = require("../../utils/uploader")
 // -----------------------------------------
 const url = require('url');
+const { getRolePermissionsByRoleName } = require("../../utils/dashboardUtils");
 
 
 const multer = require("multer");
@@ -27,6 +28,7 @@ const upload = multer({ storage: storage });
 
 const Load = require("../../models/Load");
 const User = require("../../models/User");
+const RolePermission = require("../../models/RolePermission");
 
 // Array of user's who can create, read, update and delete
 const allowed_members_set_1 = config.get("roles").filter(member => member !== 'user' && member !== 'driver');
@@ -44,7 +46,7 @@ router.get("/me", auth, async (req, res) => {
       error, allLoads, load, limit, total, totalPages, currentPage
     } = await getLoads(req.query, req.user.id, req.user);
     if (error) {
-      return res.status(error.status).json({ msg: error.message });
+      return res.status(error.status).json({ message: error.message });
     }
     return res.json({ allLoads, load, limit, total, totalPages, currentPage });
   } catch (err) {
@@ -54,14 +56,30 @@ router.get("/me", auth, async (req, res) => {
 
 router.get("/invoice_loads", auth, async (req, res) => {
   try {
-    const { page = 1, limit = 4, search = '' } = req.query;
+    const { page = 1, limit = 4, search = '' } = req.query,
+      { role, id } = req.user;
+
+    const doesRoleHasViewPermission = await RolePermission.findOne({ 'permissions.invoices.view': true, userId: id });
+
+    if (!doesRoleHasViewPermission) {
+      return res.status(403).json({ message: "Unauthorized", success: false });
+    }
+
+    const { permissions: { invoices: { hasElevatedPrivileges = false } = {} } = {} } = doesRoleHasViewPermission || {};
+    const [adminRoleData] = await getRolePermissionsByRoleName('admin') || [];
     const query = {
-      orgId: req.user.orgId,
       status: 'delivered', $or: [
         { invoice_created: false },
         { invoice_created: { $exists: false } }
       ]
     };
+
+    if (role.toLowerCase() === adminRoleData.roleName.toLowerCase() || hasElevatedPrivileges) {
+      query.orgId = req.user.orgId;
+    } else {
+      query.user = id;
+    }
+
     // if (search) {
     //   const regex = { $regex: to_search, $options: 'i' };
     //   query['$or'] = [
@@ -72,7 +90,7 @@ router.get("/invoice_loads", auth, async (req, res) => {
     const loads = await Load.find(query).populate('user', ['name', 'firstName', 'lastName'])
       // .select("loadNumber brokerage rate rateConfirmation proofDelivery")
       .limit(limit * 1)
-      .sort({ createdAt: -1 })
+      .sort({ updatedAt: -1 })
       .skip((page - 1) * limit)
       .exec();
     return res.json({
@@ -118,11 +136,24 @@ const getLoads = async ({ page = 1, limit = 4, search = '', module = '' }, _id, 
     }
   }
 
+  const doesRoleHasViewPermission = await RolePermission.findOne({ 'permissions.loads.view': true, userId: _id });
+
+  if (!doesRoleHasViewPermission) {
+    return {
+      error: {
+        status: 403,
+        message: "Unauthorized"
+      }
+    };
+  }
+  const { permissions: { loads: { hasElevatedPrivileges = false } = {} } = {} } = doesRoleHasViewPermission || {};
+
   /**
    * Since all the below roles share the loads among themselves for visibility, we have to show all the loads based on orgId to them
+   * Bypass admin and superadmin to view all the loads within the org
    */
-  const isAdmin = ['admin', 'dispatch', 'support', 'invoice'].includes(reqUser.role.toLowerCase());
-  if (isAdmin)
+  const isAdmin = ['admin', 'superadmin'].includes(reqUser.role.toLowerCase());
+  if (isAdmin || hasElevatedPrivileges)
     query['orgId'] = reqUser.orgId;
   else
     query['user'] = _id;
