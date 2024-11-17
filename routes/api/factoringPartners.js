@@ -5,8 +5,12 @@ const FactoringPartners = require("../../models/factoringPartners");
 
 router.get('/', auth, async (req, res) => {
     const { orgId } = req.user;
+    const { page = 1, limit = 10 } = req.query
     try {
-        const factoringPartners = await FactoringPartners.find({ orgId }).populate('orgId', 'name -_id') // populate orgId for related data
+        const factoringPartners = await FactoringPartners.find({ orgId })
+            .limit(+limit)
+            .skip((page - 1) * limit)
+            .populate('orgId', 'name -_id')
         res.status(200).json({ data: factoringPartners });
     } catch (error) {
         res.status(500).json({ message: error.message });
