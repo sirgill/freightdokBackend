@@ -21,7 +21,15 @@ const factoringPartners = new Schema({
     status: {
         type: Boolean,
         default: true
-    }
+    },
+    lastUpdatedBy: {
+        type: Schema.Types.ObjectId,
+        ref: 'user'
+    },
+    createdBy: {
+        type: Schema.Types.ObjectId,
+        ref: 'user'
+    },
 }, {
     timestamps: true
 })
