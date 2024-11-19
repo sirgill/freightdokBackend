@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const auth = require("../../middleware/auth");
+const validateOrgId = require("../../middleware/validateOrgId");
 const FactoringPartners = require("../../models/factoringPartners");
 
 router.get('/', auth, async (req, res) => {
@@ -30,7 +31,7 @@ router.get('/:id', auth, async (req, res) => {
     }
 })
 
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, validateOrgId, async (req, res) => {
     const { orgId } = req.user;
 
     try {
@@ -42,7 +43,7 @@ router.post('/', auth, async (req, res) => {
     }
 })
 
-router.put('/:id', auth, async (req, res) => {
+router.put('/:id', auth, validateOrgId, async (req, res) => {
     try {
 
         const updatedFactoringPartner = await FactoringPartners.findByIdAndUpdate(
@@ -51,13 +52,13 @@ router.put('/:id', auth, async (req, res) => {
             { new: true, runValidators: true }
         );
         if (!updatedFactoringPartner) return res.status(404).json({ message: 'Factoring Partner not found' });
-        res.status(200).json({ message: 'Updated ' + req.body.name + ' Successfully' });
+        res.status(200).json({ message: 'Updated Successfully' });
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
 })
 
-router.delete('/:id', auth, async (req, res) => {
+router.delete('/:id', auth, validateOrgId, async (req, res) => {
     try {
         const updatedFactoringPartner = await FactoringPartners.findByIdAndUpdate(
             req.params.id,

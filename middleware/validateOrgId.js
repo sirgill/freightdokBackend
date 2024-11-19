@@ -12,7 +12,7 @@ const validateOrgId = async (req, res, next) => {
                 return res.status(400).json({ message: 'Organization does not exist' });
             }
         } catch (error) {
-            return res.status(400).json({ message: 'Invalid orgId format' });
+            return res.status(400).json({ message: 'Invalid orgId format', _dbMessage: error.message });
         }
     }
 
