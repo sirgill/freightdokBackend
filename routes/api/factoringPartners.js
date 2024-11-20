@@ -11,6 +11,7 @@ router.get('/', auth, async (req, res) => {
         const factoringPartners = await FactoringPartners.find({ orgId })
             .limit(+limit)
             .skip((page - 1) * limit)
+            .select('-password')
             .populate({ path: 'orgId', select: 'name -_id' })
             .populate({ path: 'lastUpdatedBy', select: 'firstName lastName name email -_id' })
         res.status(200).json({ data: factoringPartners });
@@ -22,7 +23,9 @@ router.get('/', auth, async (req, res) => {
 router.get('/:id', auth, async (req, res) => {
     const { orgId } = req.user;
     try {
-        const factoringPartner = await FactoringPartners.findOne({ _id: req.params.id, status: true, orgId }).populate({ path: 'orgId', select: 'name -_id' });
+        const factoringPartner = await FactoringPartners.findOne({ _id: req.params.id, status: true, orgId })
+            .select('-password')
+            .populate({ path: 'orgId', select: 'name -_id' });
         if (!factoringPartner) {
             return res.status(404).json({ message: 'Factoring Partner not found or inactive' });
         }
@@ -46,8 +49,8 @@ router.post('/', auth, validateOrgId, async (req, res) => {
 
 router.put('/:id', auth, validateOrgId, async (req, res) => {
     try {
-        const updatedFactoringPartner = await FactoringPartners.findByIdAndUpdate(
-            req.params.id,
+        const updatedFactoringPartner = await FactoringPartners.findOneAndUpdate(
+            { _id: req.params.id },
             { ...req.body, lastUpdatedBy: req.user.id },
             { new: true, runValidators: true }
         );

@@ -1,3 +1,5 @@
+const bcrypt = require('bcryptjs');
+
 const getLoadsStruct = ({ assigned = false, loadNumber, rate, userId, brokerage, pickup = {}, drop, bucketFiles = [], status }) => {
     return {
         "trailorNumber": "",
@@ -62,6 +64,19 @@ const sendJson = (success, message, ...rest) => {
 
 const MAIL_SERVER_ADDRESS = 'https://mail.freightdok.io';
 
+const encryptPassword = async (plainText = null) => {
+    if (!plainText) {
+        throw Error('Password param not provided')
+    }
+    try {
+        const salt = await bcrypt.genSalt(10);
+        return await bcrypt.hash(plainText, salt);
+    } catch (error) {
+        console.error(error.message)
+        return null
+    }
+}
+
 module.exports = {
     sendJson,
     createOtp,
@@ -69,5 +84,6 @@ module.exports = {
     isEmailValid,
     isPhoneValid,
     getLoadsStruct,
+    encryptPassword,
     MAIL_SERVER_ADDRESS,
 }
