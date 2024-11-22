@@ -13,7 +13,7 @@ const DASHBOARDS = [
     { "id": "facilities", "label": "Facilities" },
 ]
 
-const DEFAULT_PERMISSIONS = { add: false, edit: false, delete: false, view: false };
+const DEFAULT_PERMISSIONS = { add: false, edit: false, delete: false, view: false, elevatedPrivileges: false };
 
 const getRolePermissionsByRoleName = async (roleName) => {
     try {

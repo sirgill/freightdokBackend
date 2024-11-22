@@ -3,6 +3,7 @@ const auth = require("../../middleware/auth");
 const Load = require("../../models/Load");
 const { getRolePermissionsByRoleName } = require("../../utils/dashboardUtils");
 const RolePermission = require("../../models/RolePermission");
+const factoringPartners = require("../../models/factoringPartners");
 const router = express.Router();
 
 router.get('/', auth, async (req, res) => {
@@ -59,7 +60,9 @@ router.get('/:id', auth, async (req, res) => {
     const { id } = req.params;
     try {
         const load = await Load.findById(id).populate('user', 'firstName lastName email name');
-        res.status(200).json({ data: load })
+        const { orgId } = load;
+        const fpData = await factoringPartners.findOne({ orgId }).select('noticeText -_id');
+        res.status(200).json({ data: load, fpData })
     } catch (error) {
         console.log(error.message)
         res.status(404).json({ _dbError: error.message })

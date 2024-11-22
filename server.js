@@ -67,6 +67,7 @@ app.use('/api/onboarding', require('./routes/api/onBoarding'));
 app.use('/api/forgotPassword', require('./routes/api/forgotPasswordOtp'));
 app.use('/api/roles', require('./routes/api/defaultRolePermission'));
 app.use('/api/rolePermission', require('./routes/api/rolePermission'));
+app.use('/api/factoringPartners', require('./routes/api/factoringPartners'));
 
 // ---------------------------------------------------------------------------
 //$NEWBOOKBIDWEBHOOK-$7867*/
