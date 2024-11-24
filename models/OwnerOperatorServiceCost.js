@@ -6,7 +6,7 @@ const OwnerOperatorServiceCost = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'organizations',
     },
-    userId: {
+    ownerOperatorId: {
         type: Schema.Types.ObjectId,
         ref: 'user',
     },
@@ -30,14 +30,22 @@ const OwnerOperatorServiceCost = new Schema({
         type: Number,
         required: true
     },
-    costs: {
+    additionalCosts: {
         type: Object,
         required: true
     },
     total: {
         type: Number,
         required: true
-    }
+    },
+    createdBy: {
+        type: Schema.Types.ObjectId,
+        ref: 'user',
+    },
+    updatedBy: {
+        type: Schema.Types.ObjectId,
+        ref: 'user',
+    },
 },
     {
         collection: 'ownerOperatorServiceCost'
