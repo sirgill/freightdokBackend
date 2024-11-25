@@ -1,15 +1,15 @@
 const mongoose = require('mongoose');
 
-
+const defaults = {
+    type: Boolean,
+    default: false
+}
 const canAccess = {
     add: Boolean,
     edit: Boolean,
     delete: Boolean,
     view: Boolean,
-    hasElevatedPrivileges: {
-        type: Boolean,
-        default: false
-    }
+    hasElevatedPrivileges: defaults
 }
 
 const rolePermission = new mongoose.Schema({
@@ -39,6 +39,17 @@ const rolePermission = new mongoose.Schema({
         carrierProfile: { ...canAccess },
         openBoard: { ...canAccess },
         history: { ...canAccess },
+        serviceCosts: {
+            view: defaults,
+            addOpCosts: defaults,
+            viewOpCosts: defaults,
+            editOpCosts: defaults,
+            deleteOpCosts: defaults,
+            addEfsTranasactionRates: defaults,
+            viewEfsTranasactionRates: defaults,
+            editEfsTranasactionRates: defaults,
+            deleteEfsTranasactionRates: defaults
+        }
     },
     isDefault: {
         type: Boolean,

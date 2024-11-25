@@ -11,6 +11,7 @@ const DASHBOARDS = [
     { "id": "ownerOperator", "label": "Owner Operator" },
     { "id": "users", "label": "Users" },
     { "id": "facilities", "label": "Facilities" },
+    { id: 'serviceCosts', 'label': 'Service Costs' }
 ]
 
 const DEFAULT_PERMISSIONS = { add: false, edit: false, delete: false, view: false };

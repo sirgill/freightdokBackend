@@ -33,13 +33,10 @@ const getAllRates = async (req, res) => {
 };
 
 const getRateByAmount = async (req, res) => {
-    const { amount } = req.params;
+    const { id } = req.params;
 
     try {
-        const rate = await EFSTransactionRates.findOne({
-            minAmount: { $lte: amount },
-            maxAmount: { $gte: amount }
-        });
+        const rate = await EFSTransactionRates.findById(id);
 
         if (!rate) {
             return res.status(404).json({ error: 'No rate found for the given amount.' });
