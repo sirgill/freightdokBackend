@@ -45,9 +45,9 @@ const rolePermission = new mongoose.Schema({
             viewOpCosts: defaults,
             editOpCosts: defaults,
             deleteOpCosts: defaults,
-            addEfsTranasactionRates: defaults,
-            viewEfsTranasactionRates: defaults,
-            editEfsTranasactionRates: defaults,
+            addEfsTransactionRates: defaults,
+            viewEfsTransactionRates: defaults,
+            editEfsTransactionRates: defaults,
             deleteEfsTranasactionRates: defaults
         }
     },

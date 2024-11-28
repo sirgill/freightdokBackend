@@ -36,15 +36,15 @@ const defaultRolePermission = mongoose.Schema({
         openBoard: { ...canAccess },
         history: { ...canAccess },
         serviceCosts: {
+            view: defaults,
             addOpCosts: defaults,
-            editEfsTranasactionRates: defaults,
+            viewOpCosts: defaults,
             editOpCosts: defaults,
             deleteOpCosts: defaults,
-            deleteEfsTranasactionRates: defaults,
-            addEfsTranasactionRates: defaults,
-            view: defaults,
-            viewEfsTranasactionRates: defaults,
-            viewOpCosts: defaults,
+            addEfsTransactionRates: defaults,
+            viewEfsTransactionRates: defaults,
+            editEfsTransactionRates: defaults,
+            deleteEfsTranasactionRates: defaults
         }
     },
 }, {
