@@ -12,6 +12,8 @@ router.get('/:id', auth, operatorCosts.getCostById)
 
 router.put('/:id', auth, operatorCosts.updateCost)
 
+router.delete('/removeKey', auth, operatorCosts.removeKeyFromAdditionalCosts)
+
 router.delete('/:id', auth, operatorCosts.deleteCost)
 
 module.exports = router;

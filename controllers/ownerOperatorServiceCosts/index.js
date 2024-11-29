@@ -169,6 +169,45 @@ const deleteCost = async (req, res) => {
     }
 }
 
+const removeKeyFromAdditionalCosts = async (req, res) => {
+    const { key } = req.body;
+    const { orgId } = req.user;
+
+    if (!key) {
+        return res.status(400).json({ error: "Key to remove is required." });
+    }
+
+    try {
+        const documents = await OwnerOperatorServiceCost.find({ orgId, [`additionalCosts.${key}`]: { $exists: true } });
+
+        let modifiedCount = 0;
+
+        for (const doc of documents) {
+            delete doc.additionalCosts[key];
+
+            const additionalCostsSum = Object.values(doc.additionalCosts).reduce((sum, value) => sum + value, 0);
+            doc.total =
+                doc.truckInsurance +
+                doc.trailerInsurance +
+                doc.eld +
+                doc.parking +
+                additionalCostsSum;
+
+            await doc.save();
+            modifiedCount++;
+        }
+
+        res.status(200).json({
+            message: "Cost removed.",
+            modifiedCount,
+        });
+    } catch (error) {
+        console.error("Error removing key from additionalCosts:", error);
+        res.status(500).json({ error: "An error occurred while removing the key." });
+    }
+};
+
+
 module.exports = {
     createCost,
     getAllCosts,
@@ -176,4 +215,5 @@ module.exports = {
     updateCost,
     deleteCost,
     createAdditionalCosts,
+    removeKeyFromAdditionalCosts,
 };
