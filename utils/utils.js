@@ -77,6 +77,25 @@ const encryptPassword = async (plainText = null) => {
     }
 }
 
+const sumValuesInObject = (obj) => {
+    let sum = 0;
+
+    for (let key in obj) {
+        if (obj.hasOwnProperty(key)) {
+            // If the value is a number, add it to the sum
+            if (typeof obj[key] === 'number') {
+                sum += obj[key];
+            }
+            // If the value is an object, recursively call the function
+            else if (typeof obj[key] === 'object' && obj[key] !== null) {
+                sum += sumValuesInObject(obj[key]); // Recursively sum values in the nested object
+            }
+        }
+    }
+
+    return sum;
+};
+
 module.exports = {
     sendJson,
     createOtp,
@@ -86,4 +105,5 @@ module.exports = {
     getLoadsStruct,
     encryptPassword,
     MAIL_SERVER_ADDRESS,
+    sumValuesInObject,
 }

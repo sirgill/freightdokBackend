@@ -1,10 +1,10 @@
 const express = require("express");
 const auth = require("../../middleware/auth");
-const OwnerOperatorServiceCost = require("../../models/OwnerOperatorServiceCost");
 const router = express.Router();
 const operatorCosts = require('../../controllers/ownerOperatorServiceCosts')
 
 router.post('/', auth, operatorCosts.createCost)
+router.post('/createAdditionalCosts', auth, operatorCosts.createAdditionalCosts)
 
 router.get('/', auth, operatorCosts.getAllCosts)
 

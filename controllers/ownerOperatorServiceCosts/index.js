@@ -1,4 +1,5 @@
 const OwnerOperatorServiceCost = require("../../models/OwnerOperatorServiceCost");
+const { sendJson, sumValuesInObject } = require("../../utils/utils");
 
 const createCost = async (req, res) => {
     const { id } = req.user;
@@ -31,6 +32,27 @@ const createCost = async (req, res) => {
             message: 'Error creating owner operator service cost.',
             error: error.message,
         });
+    }
+}
+
+const createAdditionalCosts = async (req, res) => {
+    try {
+        const { orgId, id } = req.user;
+        const { category } = req.body;
+
+        OwnerOperatorServiceCost.updateMany(
+            { orgId },
+            { $set: { [`additionalCosts.${category}`]: 0, updatedBy: id } },
+            (err, result) => {
+                if (err) {
+                    res.status(400).json(sendJson(false, err.message));
+                } else {
+                    res.status(200).json(sendJson(true, 'Category Added'))
+                }
+            }
+        );
+    } catch (error) {
+        res.status(500).json(sendJson(false, error.message));
     }
 }
 
@@ -87,6 +109,14 @@ const updateCost = async (req, res) => {
     try {
         const { id } = req.params;
         const updates = req.body;
+        const form = { ...updates };
+
+        if (typeof form === 'object') {
+            delete form.lease;
+            const total = sumValuesInObject(form);
+            updates.total = total;
+        }
+
 
         const updatedCost = await OwnerOperatorServiceCost.findByIdAndUpdate(id, { ...updates, updatedBy: _id }, {
             new: true,
@@ -145,4 +175,5 @@ module.exports = {
     getCostById,
     updateCost,
     deleteCost,
+    createAdditionalCosts,
 };
