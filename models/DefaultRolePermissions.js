@@ -32,7 +32,17 @@ const defaultRolePermission = mongoose.Schema({
         },
         facilities: { ...canAccess },
         ownerOperator: { ...canAccess },
-        carrierProfile: { ...canAccess },
+        carrierProfile: {
+            ...canAccess,
+            viewFactoringPartners: {
+                type: Boolean,
+                default: false
+            },
+            updateFactoringPartners: {
+                type: Boolean,
+                default: false
+            }
+        },
         openBoard: { ...canAccess },
         history: { ...canAccess },
         serviceCosts: {
