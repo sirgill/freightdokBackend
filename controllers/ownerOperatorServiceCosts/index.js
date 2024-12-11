@@ -1,4 +1,6 @@
 const OwnerOperatorServiceCost = require("../../models/OwnerOperatorServiceCost");
+const RolePermission = require("../../models/RolePermission");
+const { getRolePermissionsByRoleName } = require("../../utils/dashboardUtils");
 const { sendJson, sumValuesInObject } = require("../../utils/utils");
 
 const createCost = async (req, res) => {
@@ -57,9 +59,25 @@ const createAdditionalCosts = async (req, res) => {
 }
 
 const getAllCosts = async (req, res) => {
-    const { orgId } = req.user;
+    const { orgId, id, role } = req.user;
     try {
-        const costs = await OwnerOperatorServiceCost.find({ orgId })
+        const doesRoleHasViewPermission = await RolePermission.findOne({ 'permissions.serviceCosts.view': true, userId: id });
+
+        if (!doesRoleHasViewPermission) {
+            return res.status(403).json({ message: "Unauthorized", success: false });
+        }
+
+        const [adminRoleData] = await getRolePermissionsByRoleName('admin') || [];
+        const query = {};
+
+        //If user is admin, show list by orgId
+        if (role.toLowerCase() === adminRoleData.roleName.toLowerCase()) {
+            query.orgId = orgId;
+        } else {
+            query.ownerOperatorId = id;
+        }
+
+        const costs = await OwnerOperatorServiceCost.find(query)
             .populate('orgId', 'name -_id')
             .populate('updatedBy', 'firstName lastName name -_id')
             .populate('ownerOperatorId', 'firstName lastName name -_id');

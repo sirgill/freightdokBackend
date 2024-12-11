@@ -1,4 +1,5 @@
 const DefaultRolePermissions = require("../models/DefaultRolePermissions");
+const RolePermissions = require("../models/RolePermission");
 
 const DASHBOARDS = [
     { "id": "bids", "label": "Bids" },
@@ -25,8 +26,18 @@ const getRolePermissionsByRoleName = async (roleName) => {
     }
 }
 
+const getRolePermissionsForUser = async (userId) => {
+    try {
+        const userPermission = await RolePermissions.findOne({ userId });
+        return userPermission;
+    } catch (error) {
+        return null;
+    }
+}
+
 module.exports = {
     DEFAULT_PERMISSIONS,
     DASHBOARDS,
+    getRolePermissionsForUser,
     getRolePermissionsByRoleName
 }
