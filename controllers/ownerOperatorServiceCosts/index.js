@@ -61,13 +61,7 @@ const createAdditionalCosts = async (req, res) => {
 const getAllCosts = async (req, res) => {
     const { orgId, id, role } = req.user;
     try {
-        const doesRoleHasViewPermission = await RolePermission.findOne({ 'permissions.serviceCosts.view': true, userId: id });
-
-        if (!doesRoleHasViewPermission) {
-            return res.status(403).json({ message: "Unauthorized", success: false });
-        }
-
-        const [adminRoleData] = await getRolePermissionsByRoleName('admin') || [];
+        const [adminRoleData] = await getRolePermissionsByRoleName('admin') || [{}];
         const query = {};
 
         //If user is admin, show list by orgId
