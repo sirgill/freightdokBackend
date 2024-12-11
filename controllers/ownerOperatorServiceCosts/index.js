@@ -191,21 +191,13 @@ const removeKeyFromAdditionalCosts = async (req, res) => {
 
     try {
         const documents = await OwnerOperatorServiceCost.find({ orgId, [`additionalCosts.${key}`]: { $exists: true } });
-
         let modifiedCount = 0;
-
         for (const doc of documents) {
-            delete doc.additionalCosts[key];
-
-            const additionalCostsSum = Object.values(doc.additionalCosts).reduce((sum, value) => sum + value, 0);
-            doc.total =
-                doc.truckInsurance +
-                doc.trailerInsurance +
-                doc.eld +
-                doc.parking +
-                additionalCostsSum;
-
-            await doc.save();
+            delete doc['additionalCosts'][key]
+            const { additionalCosts } = doc;
+            const additionalCostsSum = Object.values(additionalCosts).reduce((sum, value) => sum + value, 0);
+            doc['total']=doc.truckInsurance + doc.trailerInsurance + doc.eld + doc.parking + additionalCostsSum
+            await OwnerOperatorServiceCost.findOneAndUpdate({ _id: doc.id }, doc, { new: true })
             modifiedCount++;
         }
 
