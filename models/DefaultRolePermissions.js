@@ -55,6 +55,14 @@ const defaultRolePermission = mongoose.Schema({
             viewEfsTransactionRates: defaults,
             editEfsTransactionRates: defaults,
             deleteEfsTranasactionRates: defaults
+        },
+        businessIntelligence: {
+            overviewTab: defaults,
+            historicalTab: defaults,
+            financialTab: defaults,
+            view: defaults,
+            hasElevatedPrivileges: defaults,
+            canViewCards: defaults,
         }
     },
 }, {
