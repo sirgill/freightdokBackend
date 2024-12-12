@@ -96,6 +96,15 @@ const sumValuesInObject = (obj) => {
     return sum;
 };
 
+let USDollar = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+});
+
+const getDollarPrefixedPrice = (price) => {
+    return USDollar.format(price)
+}
+
 module.exports = {
     sendJson,
     createOtp,
@@ -106,4 +115,5 @@ module.exports = {
     encryptPassword,
     MAIL_SERVER_ADDRESS,
     sumValuesInObject,
+    getDollarPrefixedPrice,
 }
