@@ -36,6 +36,7 @@ const getInsights = async (req, res) => {
                 _id: null,
                 totalRevenue: { $sum: { $convert: { input: "$rate", to: "double", onError: 0, onNull: 0 } } },
                 loadCount: { $sum: 1 },
+                loads: { $push: "$$ROOT" },
             },
         },
     ])
@@ -45,6 +46,7 @@ const getInsights = async (req, res) => {
                     revenue: getDollarPrefixedPrice(`${data[0].totalRevenue}`),
                     loadCount: data[0].loadCount,
                     averageRate: getDollarPrefixedPrice(`${(data[0].totalRevenue / diffInDays)}`),
+                    overview: data[0].loads
                 };
                 res.send(result);
             } else {
