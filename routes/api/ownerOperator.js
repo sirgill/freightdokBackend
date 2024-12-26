@@ -4,6 +4,9 @@ const router = express.Router();
 const User = require("../../models/User");
 const { authAdmin, ROLE_NAMES } = require("../../middleware/permissions");
 const { getRolePermissionsByRoleName } = require("../../utils/dashboardUtils");
+const { createDefaultServiceCost } = require("../../controllers/ownerOperatorServiceCosts/createDefaultServiceCosts");
+const { sendJson } = require("../../utils/utils");
+const OwnerOperatorServiceCost = require("../../models/OwnerOperatorServiceCost");
 
 router.post('/', auth, authAdmin, async (req, resp) => {
     try {
@@ -36,12 +39,21 @@ router.post('/', auth, authAdmin, async (req, resp) => {
             })
         } else {
             // Create new Owner Operator
+            delete body._id;
             const user = new User({ ...body, orgId, created_by: id, last_updated_by: id, rolePermissionId, role: roleName })
             user.save()
-                .then(() => {
-                    return resp.status(201).json({ success: true, message: 'Owner Operator added' });
+                .then((data) => {
+                    if (data) {
+                        createDefaultServiceCost({ ownerOperatorId: data._id, orgId, reqUserId: id }, (err, data) => {
+                            if (err) {
+                                return resp.status(500).json(sendJson(false, 'Error Creating Service costs for the Owner Operator.'))
+                            }
+                            return resp.status(201).json({ success: true, message: 'Owner Operator added' });
+                        });
+                    }
                 })
                 .catch(err => {
+                    console.log(err.message)
                     if (err.name === 'MongoError' && err.code === 11000) {
                         resp.status(403).json({ success: false, message: 'Email already exists' })
                     } else
@@ -98,9 +110,11 @@ router.delete('/:id', auth, authAdmin, async (req, res) => {
         return res.status(404).json({ message: 'ID does not exists' })
     }
     User.findOneAndDelete({ _id: id })
-        .then(result => {
-            if (result)
+        .then(async result => {
+            if (result) {
+                await OwnerOperatorServiceCost.findOneAndDelete({ ownerOperatorId: id });
                 res.status(200).json({ message: 'Deleted successfully!' });
+            }
             else {
                 res.status(400).json({ message: 'Delete unsuccessful. Please try later.' })
             }
