@@ -70,6 +70,7 @@ app.use('/api/rolePermission', require('./routes/api/rolePermission'));
 app.use('/api/ownerOperatorServiceCosts', require('./routes/api/ownerOperatorServiceCosts'));
 app.use('/api/efsTransactionRates', require('./routes/api/efsTransactionsRate'));
 app.use('/api/factoringPartners', require('./routes/api/factoringPartners'));
+app.use('/api/businessIntelligence', require('./routes/api/businessIntelligence'));
 
 // ---------------------------------------------------------------------------
 //$NEWBOOKBIDWEBHOOK-$7867*/
