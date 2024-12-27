@@ -19,7 +19,7 @@ const connectDB = async () => {
     if (err.code === 'ECONNREFUSED') {
       console.error('System seems to be offline. Please check your connection.')
     }
-    else console.error(err.message);
+    else console.error("DB ERR:", err.message);
     //Exit process with failure
     process.exit(1);
 
