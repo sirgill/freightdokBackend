@@ -101,8 +101,8 @@ let USDollar = new Intl.NumberFormat('en-US', {
     currency: 'USD',
 });
 
-const getDollarPrefixedPrice = (price) => {
-    return USDollar.format(price)
+const getDollarPrefixedPrice = (price, showNegative = false) => {
+    return showNegative ? '-' + USDollar.format(price) : USDollar.format(price)
 }
 
 module.exports = {
