@@ -13,9 +13,9 @@ const getInsights = async (req, res) => {
 
     //If user is admin, show list by orgId
     if (role.toLowerCase() === adminRoleData.roleName.toLowerCase()) {
-        query.orgId = orgId;
+        query.orgId = mongoose.Types.ObjectId(orgId);
     } else {
-        query.userId = id;
+        query.userId = mongoose.Types.ObjectId(id);
     }
 
     const diffInMs = new Date(endDate) - new Date(startDate);
@@ -24,7 +24,7 @@ const getInsights = async (req, res) => {
     Loads.aggregate([
         {
             $match: {
-                orgId: mongoose.Types.ObjectId(orgId),
+                ...query,
                 updatedAt: {
                     $gt: new Date(startDate),
                     $lt: new Date(endDate),
@@ -68,10 +68,20 @@ const getHistoricalPerformanceByDateRange = async (req, res) => {
     const diffInMs = new Date(endDate) - new Date(startDate);
     const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
 
+    const [adminRoleData] = await getRolePermissionsByRoleName('admin') || [{}];
+    const query = {};
+
+    //If user is admin, show list by orgId
+    if (role.toLowerCase() === adminRoleData.roleName.toLowerCase()) {
+        query.orgId = mongoose.Types.ObjectId(orgId);
+    } else {
+        query.userId = mongoose.Types.ObjectId(id);
+    }
+
     Loads.aggregate([
         {
             $match: {
-                orgId: mongoose.Types.ObjectId(orgId),
+                ...query,
                 updatedAt: {
                     $gt: new Date(startDate),
                     $lt: new Date(endDate),
