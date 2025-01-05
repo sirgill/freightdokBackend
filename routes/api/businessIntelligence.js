@@ -8,5 +8,6 @@ const DASHBOARD_ID = 'businessIntelligence'
 router.get('/', auth, validateViewAccess(DASHBOARD_ID), businessIntelligence.getInsights);
 
 router.get('/getLoadsByRange', auth, validateViewAccess(DASHBOARD_ID), businessIntelligence.getHistoricalPerformanceByDateRange)
+router.get('/getFinancials', auth, validateViewAccess(DASHBOARD_ID), businessIntelligence.getFinancials)
 
 module.exports = router;

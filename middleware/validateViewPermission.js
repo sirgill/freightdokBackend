@@ -9,7 +9,7 @@ const validateViewAccess = (dashboardId) => async (req, res, next) => {
     const doesRoleHasViewPermission = await RolePermission.findOne({ [`permissions.${dashboardId}.view`]: true, userId: id });
 
     if (!doesRoleHasViewPermission) {
-        return res.status(403).json({ message: "Unauthorized", success: false });
+        return res.status(403).json({ message: "Unauthorized: You cannot view " + dashboardId, success: false });
     }
     next();
 };

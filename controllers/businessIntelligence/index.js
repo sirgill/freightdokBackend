@@ -3,6 +3,8 @@ const Users = require('../../models/User');
 const Loads = require('../../models/Load');
 const { getDollarPrefixedPrice } = require('../../utils/utils');
 const mongoose = require("mongoose");
+const EFSTransactionRates = require("../../models/EFSTransactionRates");
+const OwnerOperatorServiceCost = require("../../models/OwnerOperatorServiceCost");
 
 const getInsights = async (req, res) => {
     const { role, orgId, id } = req.user,
@@ -13,9 +15,9 @@ const getInsights = async (req, res) => {
 
     //If user is admin, show list by orgId
     if (role.toLowerCase() === adminRoleData.roleName.toLowerCase()) {
-        query.orgId = orgId;
+        query.orgId = mongoose.Types.ObjectId(orgId);
     } else {
-        query.userId = id;
+        query.userId = mongoose.Types.ObjectId(id);
     }
 
     const diffInMs = new Date(endDate) - new Date(startDate);
@@ -24,7 +26,7 @@ const getInsights = async (req, res) => {
     Loads.aggregate([
         {
             $match: {
-                orgId: mongoose.Types.ObjectId(orgId),
+                ...query,
                 updatedAt: {
                     $gt: new Date(startDate),
                     $lt: new Date(endDate),
@@ -68,10 +70,20 @@ const getHistoricalPerformanceByDateRange = async (req, res) => {
     const diffInMs = new Date(endDate) - new Date(startDate);
     const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
 
+    const [adminRoleData] = await getRolePermissionsByRoleName('admin') || [{}];
+    const query = {};
+
+    //If user is admin, show list by orgId
+    if (role.toLowerCase() === adminRoleData.roleName.toLowerCase()) {
+        query.orgId = mongoose.Types.ObjectId(orgId);
+    } else {
+        query.userId = mongoose.Types.ObjectId(id);
+    }
+
     Loads.aggregate([
         {
             $match: {
-                orgId: mongoose.Types.ObjectId(orgId),
+                ...query,
                 updatedAt: {
                     $gt: new Date(startDate),
                     $lt: new Date(endDate),
@@ -104,7 +116,71 @@ const getHistoricalPerformanceByDateRange = async (req, res) => {
         });
 }
 
+const getFinancials = async (req, res) => {
+    const { role, orgId, id } = req.user;
+    const { startDate, endDate } = req.query;
+
+    console.log("ID :", id);
+
+    const [adminRoleData] = await getRolePermissionsByRoleName('admin') || [{}];
+    const query = {};
+
+    // If user is admin, show list by orgId
+    if (role.toLowerCase() === adminRoleData.roleName.toLowerCase()) {
+        query.orgId = orgId;
+    } else {
+        query.userId = id;
+    }
+
+    const diffInMs = new Date(endDate) - new Date(startDate);
+    const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
+    const { lease, total } = await OwnerOperatorServiceCost.findOne({ ownerOperatorId: id });
+    const { transactionCost: efsAdvances } = await EFSTransactionRates.findOne({
+        maxAmount: { $gte: lease }
+    });
+
+    Loads.aggregate([
+        {
+            $match: {
+                orgId: mongoose.Types.ObjectId(orgId),
+                updatedAt: {
+                    $gt: new Date(startDate),
+                    $lt: new Date(endDate),
+                },
+            },
+        },
+        {
+            $group: {
+                _id: null,
+                totalRevenue: { $sum: { $convert: { input: "$rate", to: "double", onError: 0, onNull: 0 } } },
+            },
+        },
+    ])
+    .then((data) => {
+        if (data.length) {
+            const net = data[0].totalRevenue - ((data[0].totalRevenue * lease) / 100) - efsAdvances;
+
+            const result = {
+                revenue: getDollarPrefixedPrice(`${data[0].totalRevenue}`),
+                total: getDollarPrefixedPrice(`${total}`),
+                efsAdvances: getDollarPrefixedPrice(`${efsAdvances}`),
+                lease,
+                net: getDollarPrefixedPrice(`${net}`)
+            };
+            res.send(result);
+        } else {
+            res.status(404).send({ message: "No data found." });
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        res.status(500).send({ message: "Internal Server Error" });
+    });
+}
+
+
 module.exports = {
     getInsights,
-    getHistoricalPerformanceByDateRange
+    getHistoricalPerformanceByDateRange,
+    getFinancials
 }

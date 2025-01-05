@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: rabbitqueue
+      MONGO_INITDB_ROOT_PASSWORD: rabbit
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongo-express
+    restart: always
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: rabbitqueue
+      ME_CONFIG_MONGODB_ADMINPASSWORD: rabbit
+      ME_CONFIG_MONGODB_SERVER: mongodb
+      ME_CONFIG_MONGODB_URL: mongodb://rabbitqueue:rabbit@mongodb:27017/  # Added MongoDB URL
+      ME_CONFIG_BASICAUTH: 'false' 
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mongodb
+
+  sync-job:
+    image: bitnami/mongodb:latest
+    container_name: mongodb-sync
+    restart: always
+    entrypoint: ["/bin/bash", "-c"]
+    command: >
+      "while true; do
+         mongodump --uri='mongodb+srv://freightdokDB:freightdokprod2213@freightdokdev-ppec0.mongodb.net/test?retryWrites=true&w=majority' --archive | \
+         mongorestore --uri='mongodb://rabbitqueue:rabbit@mongodb:27017' --archive;
+         sleep 86400;
+       done"
+    depends_on:
+      - mongodb
+volumes:
+  mongodb_data:
